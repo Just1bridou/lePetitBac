@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/css/style.css" rel="stylesheet">
+    <title>Petit bac</title>
+</head>
+<body>
+
+<section id="login" class="none">
+
+    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="auto" viewBox="0 0 1926.68 458.632">
+        <defs>
+          <linearGradient id="linear-gradient" x1="0.946" y1="0.327" x2="0" y2="0.301" gradientUnits="objectBoundingBox">
+            <stop offset="0" stop-color="#2455dc"/>
+            <stop offset="1" stop-color="#63f881"/>
+          </linearGradient>
+        </defs>
+        <path class="svgLogin" data-name="Path 1" d="M0,0H1926.68V310.646s-237.6-53.172-373.194-38.8S1335.015,412.105,979.828,424.737,456.312,314.775,289.9,324.143,0,458.632,0,458.632Z" fill="url(#linear-gradient)"/>
+      </svg>
+      
+
+    <h1>LE PETIT BAC</h1>
+
+    <div class="divContent">
+        <div class="loginButtonContent">
+            <input id="login_pseudo" type="text" placeholder="Pseudo ...">
+            <button id="createRoom" disabled>CRÉER UNE PARTIE</button>
+        </div>
+    </div>
+
+</section>
+
+<section id="waitingRoom" class="none">
+    
+    <section class="header">
+        <h1 class="waiting_title"></h1>
+
+        <div class="copyLink">
+            <span class="clickMe">Cliquer ici pour copier le lien</span>
+            <input type="text" id="join_link"/>
+        </div>
+
+        <h1 class="waiting_numbers"></h1>
+    </section>
+
+    <button id="ready_button">Pret</button>
+
+    <section class="body">
+
+        <div id="player_list"></div>
+    
+        <section id="gameSettings">
+            <h1>Partie</h1>
+
+            <div id="gameContainer">
+                <ul id="wordDiv">
+    
+                </ul>
+
+            </div>
+    
+        </section>
+    </section>
+
+</section>
+
+
+<section id="game" class="none">
+
+    <section class="header">
+        <h1 class="waitingRound"></h1>
+        <h2 class="letterDisplay"></h2>
+        <h1 class="waiting_numbers"></h1>
+    </section>
+
+    <section id="gameContent"></section>
+</section>
+
+<section id="result" class="none">
+
+    <section class="header">
+        <h1 class="waitingRound"></h1>
+        <h2 class="letterDisplay"></h2>
+        <h1 class="waiting_numbers"></h1>
+    </section>
+
+    <section id="resultContent"></section>
+    <section id="playerNextRound"></section>
+</section>
+
+<section id="score" class="none">
+
+    <h1>Fin de la partie !</h1>
+
+    <div class="top">
+
+    </div>
+
+</section>
+
+
+<section id="error" class="none">
+<h1></h1>
+</section>
+
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/waiting.js"></script>
+    <script src="/js/socket.io.min.js"></script>
+</body>
+</html>
