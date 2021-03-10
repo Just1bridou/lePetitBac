@@ -95,6 +95,15 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    socket.on("replayRefresh", (data) => {
+        let room = getRoom(roomList, socket.room)
+        if(room) {
+            let listPlayer = room.playerList
+            refreshAllPlayersList(sockets, listPlayer)
+            refreshAllPlayersWordsList(sockets, listPlayer, room.wordList)
+        } else {socket.emit('error', 'serverError')}
+    })
+
     socket.on("newPlayer", (params) => {
 
         let room = getRoom(roomList, params.room)
@@ -299,7 +308,32 @@ io.on("connect", (socket) => {
             }
         } else {socket.emit('error', 'serverError')}
     })
+
+    socket.on("replayGame", (data) => {
+        let room = getRoom(roomList, socket.room)
+        if(room) {
+            let listPlayer = room.playerList
+            resetRoom(room)
+            replayAllPlayers(room.playerList)
+        } else {socket.emit('error', 'serverError')}
+    })
+
 })
+
+function resetRoom(room) {
+
+    room.actualLetter = ""
+    room.historyLetter = []
+    room.actualRound = 1
+    room.state = "waiting"
+
+    for(let player of room.playerList) {
+        player.score = 0
+        player.data = []
+        player.ready = false
+        player.dataSend = false
+    }
+}
 
 function reworkScorePlayer(room) {
     for(let player of room.playerList) {
@@ -332,6 +366,13 @@ function refreshChoice(sockets, listPlayer, player) {
     for (var i = 0; i < listPlayer.length; i++){
         let uuid = listPlayer[i].uuid
         sockets[uuid].emit('refreshChoice', player)
+    }
+}
+
+function replayAllPlayers(listPlayer) {
+    for (var i = 0; i < listPlayer.length; i++){
+        let uuid = listPlayer[i].uuid
+        sockets[uuid].emit('replayGame', null)
     }
 }
 

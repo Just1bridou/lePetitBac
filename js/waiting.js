@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Score
     var scoreSection = document.querySelector('#score')
     var top = scoreSection.querySelector('.top')
+    var replayDiv = scoreSection.querySelector('.replayDiv')
 
     // Errors
     var errorPage = document.querySelector('#error')
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('its new player')
     }
 
+    
     initLogin()
 
     if(room) {
@@ -188,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function transitionRound(toDismiss, toShow, data) {
         let hideDiv = _('div', body, null, null, 'hideDiv')
         setTimeout(() => {
-            resetAllCat()
-            createGame(data)
+            if(data)
+                createGame(data)
             dismiss(toDismiss)
             show(toShow)
             scrollTop()
@@ -212,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (event.keyCode === 13 ) {
                     socket.emit("createRoom", { pseudo : loginInput.value})
                 }
-                
+
             } else {
                 createRoom.disabled = true;
             }
@@ -230,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initWaitingRoom() {
         for(let title of waitingTitle) {
-            title.innerHTML = title.innerHTML + "PARTIE <span class='tonalite'>#</span>" + room
+            title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
         }
         link.value = window.location + 'r/' + room
     
@@ -247,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 clickMe.innerHTML = save
             },2000)
         })
+
+        ready_button.disabled = false
+        ready_button.classList.remove('ready_click')
     
         ready_button.addEventListener('click', () => {
             ready_button.classList.toggle('ready_click')
@@ -255,10 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function refreshPlayerList(playerList, elem) {
+
         for(let nb of waitingNumbers) {
             nb.innerHTML = playerList.length + " JOUEUR(S)"
         }
-        for(player of playerList) {
+        for(let player of playerList) {
+            console.log(player)
             let playerLi = createPlayerDiv(player.pseudo, elem)
             if(!player.ready) {
                 playerLi.classList.add("unready")
@@ -270,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createPlayerDiv(pseudo, elem) {
         let div = _('div', elem, null, null, 'playerDivContent')
-        let h2 = _("h2", div, pseudo)
+        _("h2", div, pseudo)
 
         return div
     }
@@ -475,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
     })
-
+ 
     function nextRoundSetup(playerList) {
         for(player of playerList) {
 
@@ -494,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     socket.on('nextRound', (data) => {
+        resetAllCat()
         transitionRound(resultSection, gameSection, data)
     })
 
@@ -501,6 +509,11 @@ document.addEventListener('DOMContentLoaded', () => {
         room.playerList.sort(function(a, b){
             return b.score - a.score;
         });
+
+        let replayButton = _('button', replayDiv, 'REJOUER', null, 'replayButton')
+        replayButton.addEventListener('click', () => {
+            socket.emit('replayGame', null)
+        })
 
         for(let i=0; i<room.playerList.length; i++) {
 
@@ -511,19 +524,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if(i==2)
             createDiv(room.playerList[2], "copper", 3)
             if(i>=3)
-            createDiv(room.playerList[i], "other", 0)
+            createDiv(room.playerList[i], "other", i+1)
 
         }
         hideAll()
         show(scoreSection)
     })
 
+    socket.on('replayGame', (data) => {
+        resetAllCat()
+        transitionRound(scoreSection, waitingRoomSection)
+        socket.emit('replayRefresh', null)
+        initWaitingRoom()
+    })
+
     function createDiv(player, rank, nb) {
         let div = _('div', top, null, null, rank)
         _('div', div, '#' + nb, null, "rank")
         _('div', div, player.pseudo, null, 'topPseudo')
-        console.log(player.score)
-        _('div', div, player.score + "", null, 'topScore')
+        _('div', div, player.score + " PTS.", null, 'topScore')
     }
 
     function resetAllCat() {
@@ -537,6 +556,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // reset results
         resultContent.innerHTML = ""
         playerNextRound.innerHTML = ""
+
+        // reset score
+        replayDiv.innerHTML = ""
+        top.innerHTML = ""
 
     }
 

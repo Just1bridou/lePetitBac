@@ -698,34 +698,96 @@ input {
 
 /* RESULT */
 
-.gold {
+#score h1 {
+    margin-top: 50px;
+    color: white;
+    font-size: 90px;
+    width: 100%;
+    text-align: center;
+}
+
+.top {
+    width: 50%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 50px;
+}
+
+.scoreBackground {
+    top: 0;
+    left: 0;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+    background: linear-gradient(0.25turn, #63F881, #2455DC);
+}
+
+.gold, .silver, .copper, .other {
+    text-transform: uppercase;
     display: flex;
-    background-color: gold;
-    width: 40%;
+    width: 100%;
     padding: 20px;
-    border-radius: 20px;
+    border-radius: 100px;
     justify-content: space-around;
     margin-bottom: 20px;
+    font-size: 30px;
+    color: white;
+    box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
+    -webkit-box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
+    -moz-box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
+    box-sizing: border-box;
+}
+
+.gold {
+    background-color: rgb(74, 103, 230);
+}
+
+.rank {
+    pad: 5px;
+    border-radius: 10px;
 }
 
 .silver {
-    display: flex;
-    background-color: silver;
-    width: 40%;
-    padding: 20px;
-    border-radius: 20px;
-    justify-content: space-around;
-    margin-bottom: 20px;
+    background-color: #3f9dd3;
 }
 
 .copper {
-    display: flex;
-    background-color: rgb(133, 107, 59);
-    width: 40%;
+    background-color: #33b897;
+    margin-bottom: 80px;
+}
+
+.other {
+    background-color: rgb(122, 122, 122);
+}
+
+.replayDiv {
+    width: 50%;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%);
+}
+
+.replayButton {
+    width: 100%;
+    box-sizing: border-box;
+    text-transform: uppercase;
     padding: 20px;
-    border-radius: 20px;
-    justify-content: space-around;
-    margin-bottom: 20px;
+    border-radius: 100px;
+    font-size: 30px;
+    color: white;
+    box-shadow: 10px 10px 15px 0px rgb(0 0 0 / 48%);
+    -webkit-box-shadow: 10px 10px 15px 0px rgb(0 0 0 / 48%);
+    -moz-box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
+    margin-top: 30px;
+    background-color: #F97676;
+    border: none;
+}
+
+.replayButton:hover {
+    cursor: pointer;
+    background-color: #d15757;
 }
 
 /* SCROLL */ 
