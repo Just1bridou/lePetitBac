@@ -91,7 +91,7 @@ io.on("connect", (socket) => {
             let listPlayer = room.playerList
     
             socket.emit("dataSender", room)
-            refreshAllPlayersWordsList(sockets, listPlayer, wordList)
+            refreshAllPlayersWordsList(sockets, listPlayer, room)
         } else {socket.emit('error', 'serverError')}
     })
 
@@ -100,7 +100,7 @@ io.on("connect", (socket) => {
         if(room) {
             let listPlayer = room.playerList
             refreshAllPlayersList(sockets, listPlayer)
-            refreshAllPlayersWordsList(sockets, listPlayer, room.wordList)
+            refreshAllPlayersWordsList(sockets, listPlayer, room)
         } else {socket.emit('error', 'serverError')}
     })
 
@@ -131,8 +131,15 @@ io.on("connect", (socket) => {
             socket.emit("removeModal")
 
             refreshAllPlayersList(sockets, listPlayer)
-            refreshAllPlayersWordsList(sockets, listPlayer, room.wordList)
+            refreshAllPlayersWordsList(sockets, listPlayer, room)
         } else {socket.emit('error', 'serverError')}
+    })
+
+    socket.on('changeMaxRound', (newMax) => {
+        let room = getRoom(roomList, socket.room)
+        if(room) {
+            room.maxRound = newMax
+        }
     })
 
     socket.on("switchState", (data) => {
@@ -260,7 +267,7 @@ io.on("connect", (socket) => {
             let listPlayer = room.playerList
 
             wordList.push(word)
-            refreshAllPlayersWordsList(sockets, listPlayer, wordList)
+            refreshAllPlayersWordsList(sockets, listPlayer, room)
         } else {socket.emit('error', 'serverError')}
     })
 
@@ -272,7 +279,7 @@ io.on("connect", (socket) => {
             let listPlayer = room.playerList
 
             wordList.splice(wordList.indexOf(word), 1);
-            refreshAllPlayersWordsList(sockets, listPlayer, wordList)
+            refreshAllPlayersWordsList(sockets, listPlayer, room)
         } else {socket.emit('error', 'serverError')}
     })
 
@@ -411,14 +418,14 @@ function refreshAllPlayersListNextRound(sockets, listPlayer) {
     }
 }
 
-function refreshAllPlayersWordsList(sockets, listPlayer, wordList) {
+function refreshAllPlayersWordsList(sockets, listPlayer, room) {
     for (var i = 0; i < listPlayer.length; i++){
 
         let uuid = listPlayer[i].uuid
         sockets[uuid].emit('wordList', getRoom(roomList, sockets[uuid].room))
 
         if(listPlayer[i].modo) {
-            sockets[uuid].emit('gameSettings', wordList) 
+            sockets[uuid].emit('gameSettings', room) 
         }
     }
 }

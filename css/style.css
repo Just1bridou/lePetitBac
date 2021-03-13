@@ -258,6 +258,27 @@ input {
     background-color: #F97676 !important;
 }
 
+.partie {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.partie input {
+    width: 50px;
+    margin-left: 30px;
+    height: 100%;
+    font-size: 40px;
+    text-align: center;
+    border: none;
+    color: #6d9fe6;
+    width: auto;
+}
+
+.partie span {
+    font-size: 30px;
+}
+
 #gameSettings {
     margin: 10px;
     flex: 1 1 0px;

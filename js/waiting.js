@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     var gameSettings = waitingRoomSection.querySelector('#gameSettings')
     var gameContainer = waitingRoomSection.querySelector('#gameContainer')
+    var partieRoundNb = waitingRoomSection.querySelector('.partie')
 
     // Game
     var gameSection = document.querySelector('#game')
@@ -101,8 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('dataSender', (data) => {
         refreshPlayerList(data.playerList, waitingPlayerList)
         initWaitingRoom()
-        dismiss(loginSection)
-        show(waitingRoomSection)
+        transitionRound(loginSection, waitingRoomSection)
     })
 
     socket.on('wordList', (data) => {
@@ -110,7 +110,12 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshWordList(data.wordList)
     })
 
-    socket.on("gameSettings", (wordList) => {
+    socket.on("gameSettings", (room) => {
+
+        let wordList = room.wordList
+        
+        partieRoundNb.innerHTML = ""
+        _('h1', partieRoundNb, 'PARTIE')
 
         let cb = document.querySelector('.settingsControls')
         if(cb) {
@@ -124,6 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
         inputNewWord.placeholder = "Ajouter un mot ..."
         let addWordButton = _('button', controlBox, "Ajouter")
         addWordButton.disabled = true
+
+        let inputRound = _('input', partieRoundNb, null, null, 'inputNbRound')
+        inputRound.value = room.maxRound
+        inputRound.type = 'number'
+        inputRound.max = 10
+        inputRound.min = 1
+        _('span', partieRoundNb, 'rounds', null, 'spanNbRound')
+
+        inputRound.addEventListener('change', () => {
+            socket.emit('changeMaxRound', inputRound.value)
+        })
 
         inputNewWord.focus()
 
@@ -187,9 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     })
 
-    function transitionRound(toDismiss, toShow, data) {
+    function transitionRound(toDismiss, toShow, data, clear = null) {
         let hideDiv = _('div', body, null, null, 'hideDiv')
         setTimeout(() => {
+            if(clear) 
+                resetAllCat()
             if(data)
                 createGame(data)
             dismiss(toDismiss)
@@ -234,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for(let title of waitingTitle) {
             title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
         }
+
         link.value = window.location + 'r/' + room
     
         link.addEventListener('click', () => {
@@ -259,13 +278,17 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     }
 
+    function resetWaitingRoom() {
+        ready_button.disabled = false
+        ready_button.classList.remove('ready_click')
+    }
+
     function refreshPlayerList(playerList, elem) {
 
         for(let nb of waitingNumbers) {
             nb.innerHTML = playerList.length + " JOUEUR(S)"
         }
         for(let player of playerList) {
-            console.log(player)
             let playerLi = createPlayerDiv(player.pseudo, elem)
             if(!player.ready) {
                 playerLi.classList.add("unready")
@@ -327,6 +350,19 @@ document.addEventListener('DOMContentLoaded', () => {
         pseudo.addEventListener('keyup', (event) => {
             if(pseudo.value != "") {
                 button.disabled = false;
+            } else {
+                button.disabled = true;
+            }
+        })
+
+        pseudo.addEventListener('keyup', (event) => {
+            if(pseudo.value != "") {
+                button.disabled = false;
+                
+                if (event.keyCode === 13 ) {
+                    socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
+                }
+
             } else {
                 button.disabled = true;
             }
@@ -501,8 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     socket.on('nextRound', (data) => {
-        resetAllCat()
-        transitionRound(resultSection, gameSection, data)
+        transitionRound(resultSection, gameSection, data, true)
     })
 
     socket.on('endResults', (room) => {
@@ -535,7 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetAllCat()
         transitionRound(scoreSection, waitingRoomSection)
         socket.emit('replayRefresh', null)
-        initWaitingRoom()
+        //initWaitingRoom()
+        resetWaitingRoom()
     })
 
     function createDiv(player, rank, nb) {
