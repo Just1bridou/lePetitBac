@@ -55,20 +55,31 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.log('its new player')
     }
-
     
+    /**
+     * Init login page
+     */
     initLogin()
 
+    /**
+     * Check if room exist
+     */
     if(room) {
         socket.emit('checkRoomExist', room)
     } else {
         show(loginSection)
     }
 
+    /**
+     * Create modal connect
+     */
     socket.on('roomExist', (data) => {
         newModalConnect()
     })
 
+    /**
+     * Display errors
+     */
     socket.on('error', (error) => {
         switch(error) {
             case 'inGame':
@@ -82,34 +93,43 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'serverError':
                 showError("Server Error :/")
                 break;
+
+            case 'kicked':
+                showError("Kicked from room :/")
+                break;
         } 
     })
 
-    function showError(error) {
-        hideAll()
-        errorPage.querySelector('h1').innerHTML = error
-        show(errorPage)
-    }
-
-    socket.on('serverError', (data) => {
-        hideAll()
+    /**
+     * Save player's UUID on sessionStorage
+     */
+    socket.on('saveUUID', (player) => {
+        sessionStorage.setItem('uuid', player.uuid);
+        sessionStorage.setItem('player', JSON.stringify(player))
     })
 
-    socket.on('saveUUID', (uuid) => {
-        sessionStorage.setItem('uuid', uuid);
-    })
-
+    /**
+     * Get room's data and init waiting room
+     */
     socket.on('dataSender', (data) => {
         refreshPlayerList(data.playerList, waitingPlayerList)
         initWaitingRoom()
-        transitionRound(loginSection, waitingRoomSection)
+        transitionRound(loginSection, waitingRoomSection, null, null, 'JOINED !')
     })
 
+    /**
+     * Refresh words list
+     */
     socket.on('wordList', (data) => {
         if(data)
         refreshWordList(data.wordList)
     })
 
+    /**
+     * Create setting for the game 
+     * - Add / remove words
+     * - Change rounds
+     */
     socket.on("gameSettings", (room) => {
 
         let wordList = room.wordList
@@ -145,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inputNewWord.addEventListener("keyup", function(event) {
             if (event.keyCode === 13 ) {
-                sendData(inputNewWord.value)
+                addNewWord(inputNewWord.value)
                 inputNewWord.focus()
             }
         });
@@ -159,25 +179,23 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     
         addWordButton.addEventListener('click', () => {
-            sendData(inputNewWord.value)
+            addNewWord(inputNewWord.value)
         })
     })
 
-    function sendData(value) {
-        if(value != "") {
-            socket.emit('addNewWord', value)
-            value = ""
-        }
-    }
-
+    /**
+     * Refresh players list
+     */
     socket.on('refreshList', (list) => {
         waitingPlayerList.innerHTML = ""
         refreshPlayerList(list, waitingPlayerList)
     })
 
+    /**
+     * Start the game
+     */
     socket.on('gameStarting', (game) => {
         ready_button.disabled = true
-        console.log("GAME STARTING")
 
         let hideDiv = _('div', body, null, null, 'hideDiv')
         let countDiv = _('div', body, null, null, 'countDiv')
@@ -203,196 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     })
 
-    function transitionRound(toDismiss, toShow, data, clear = null) {
-        let hideDiv = _('div', body, null, null, 'hideDiv')
-        setTimeout(() => {
-            if(clear) 
-                resetAllCat()
-            if(data)
-                createGame(data)
-            dismiss(toDismiss)
-            show(toShow)
-            scrollTop()
-            hideDiv.style.animation = 'reverseFullWidth 1s forwards'
-            setTimeout(() => {
-                hideDiv.remove()
-            }, 1500)
-        }, 2100)
-    }
-
-    function scrollTop() {
-        window.scrollTo(0, 0)
-    }
-
-    function initLogin() {
-        loginInput.addEventListener('keyup', (event) => {
-            if(loginInput.value != "") {
-                createRoom.disabled = false;
-                
-                if (event.keyCode === 13 ) {
-                    socket.emit("createRoom", { pseudo : loginInput.value})
-                }
-
-            } else {
-                createRoom.disabled = true;
-            }
-        })
-    
-        createRoom.addEventListener('click', () => {
-            socket.emit("createRoom", { pseudo : loginInput.value})
-        })
-
-        socket.on('roomCreated', (data) => {
-            room = data.room
-            socket.emit("getData", null)
-        })
-    }
-
-    function initWaitingRoom() {
-        for(let title of waitingTitle) {
-            title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
-        }
-
-        link.value = window.location + 'r/' + room
-    
-        link.addEventListener('click', () => {
-            link.select();
-            link.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-        })
-
-        link.addEventListener('click', () => {
-            let save = clickMe.innerHTML
-            clickMe.innerHTML = "COPIÉ !"
-            setTimeout(() => {
-                clickMe.innerHTML = save
-            },2000)
-        })
-
-        ready_button.disabled = false
-        ready_button.classList.remove('ready_click')
-    
-        ready_button.addEventListener('click', () => {
-            ready_button.classList.toggle('ready_click')
-            socket.emit("switchState", null)
-        })
-    }
-
-    function resetWaitingRoom() {
-        ready_button.disabled = false
-        ready_button.classList.remove('ready_click')
-    }
-
-    function refreshPlayerList(playerList, elem) {
-
-        for(let nb of waitingNumbers) {
-            nb.innerHTML = playerList.length + " JOUEUR(S)"
-        }
-        for(let player of playerList) {
-            let playerLi = createPlayerDiv(player.pseudo, elem)
-            if(!player.ready) {
-                playerLi.classList.add("unready")
-            } else {
-                playerLi.classList.remove("unready")
-            }
-        }
-    }
-
-    function createPlayerDiv(pseudo, elem) {
-        let div = _('div', elem, null, null, 'playerDivContent')
-        _("h2", div, pseudo)
-
-        return div
-    }
-
-    function refreshWordList(wordList, isAdmin = false) {
-        words_div.innerHTML = ""
-
-     //   words_div.classList.add('loadingWords')
-      //  settingsControls.classList.add('loadingWords')
-
-        for(let word of wordList) {
-            let wordContainer = _('div', words_div, null, null, "wordContainer")
-            _("div", wordContainer, word, null, "wordPartie")
-
-            if(isAdmin) {
-                //let remove = _('div', wordContainer, 'X', null, "removeButton")
-                wordContainer.classList.add('adminClassRemove')
-
-                wordContainer.addEventListener('click', () => {
-                    socket.emit('removeWord', word)
-                })
-            }
-        }
-
-        words_div.scrollTop = words_div.scrollHeight;
-
-       // words_div.classList.remove('loadingWords')
-      //  settingsControls.classList.remove('loadingWords')
-
-    }
-
-    function newModalConnect() {
-        let pseudo = document.createElement('input')
-        pseudo.placeholder = "Pseudo"
-        let button = document.createElement('button')
-        button.innerHTML = "VALIDER"
-        button.disabled = true
-
-        var hiden = _('div', body, null, null, "modelHide")
-        var div = _('div', hiden, null, null, "modalNewPlayer")
-        _('h3', div, "Rejoindre")
-
-        let inputContainer = _('div', div, null, null, 'modalContentInput')
-        inputContainer.appendChild(pseudo)
-        inputContainer.appendChild(button)
-
-        pseudo.addEventListener('keyup', (event) => {
-            if(pseudo.value != "") {
-                button.disabled = false;
-            } else {
-                button.disabled = true;
-            }
-        })
-
-        pseudo.addEventListener('keyup', (event) => {
-            if(pseudo.value != "") {
-                button.disabled = false;
-                
-                if (event.keyCode === 13 ) {
-                    socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
-                }
-
-            } else {
-                button.disabled = true;
-            }
-        })
-
-        button.addEventListener('click', () => {
-            socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
-        })
-
-        socket.on('removeModal', () => {
-            hiden.remove()
-            initWaitingRoom()
-            show(waitingRoomSection)
-        })
-    }
-
-    function createGame(game) {
-       // refreshPlayerList(game.playerList, gameSection.querySelector('#player_list'))
-       
-        for(let wr of waitingRound) {
-            wr.innerHTML = "Manche " + game.actualRound + '/' + game.maxRound
-        }
-
-        for(let ld of letterDisplay) {
-            ld.innerHTML = game.actualLetter
-        }
-
-        generateInput(game.wordList, game.actualLetter)
-    }
-
+    /**
+     * Stop the round (when someone click on STOP)
+     */
     socket.on('stopRound', (data) => {
         var res = []
         let inputs = gameContent.querySelectorAll('input')
@@ -416,6 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.emit('resultStop', res)
     })
 
+    /**
+     * Display results page
+     */
     socket.on('displayResults', (room) => {
         let listPlayer = room.playerList
         var clicked = false
@@ -497,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit("nextRoundPlayer", null)
         })
 
-        nextRoundSetup(room.playerList)
+        setupPlayersState(room.playerList)
 
         socket.on('refreshNextRound', (data) => {
             
@@ -514,12 +348,324 @@ document.addEventListener('DOMContentLoaded', () => {
                 socket.emit("nextRoundPlayer", null)
             })
 
-            nextRoundSetup(data)
+            setupPlayersState(data)
         })
 
     })
+
+    /**
+     * Next round
+     */
+    socket.on('nextRound', (data) => {
+        transitionRound(resultSection, gameSection, data, true, 'NEXT ROUND')
+    })
+
+    /**
+     * Display final results
+     */
+    socket.on('endResults', (room) => {
+        room.playerList.sort(function(a, b){
+            return b.score - a.score;
+        });
+
+        let replayButton = _('button', replayDiv, 'REJOUER', null, 'replayButton')
+        replayButton.addEventListener('click', () => {
+            socket.emit('replayGame', null)
+        })
+
+        for(let i=0; i<room.playerList.length; i++) {
+
+            if(i==0)
+            createPlayerResultDiv(room.playerList[0], "gold", 1)
+            if(i==1)
+            createPlayerResultDiv(room.playerList[1], "silver", 2)
+            if(i==2)
+            createPlayerResultDiv(room.playerList[2], "copper", 3)
+            if(i>=3)
+            createPlayerResultDiv(room.playerList[i], "other", i+1)
+
+        }
+
+        transitionRound(resultSection, scoreSection, null, null, 'RESULTS')
+    })
+
+    /**
+     * Replay game
+     */
+    socket.on('replayGame', (data) => {
+        resetAllCat()
+        transitionRound(scoreSection, waitingRoomSection, null, null, 'REPLAY')
+        socket.emit('replayRefresh', null)
+        resetWaitingRoom()
+    })
+
+    /**
+     * Make transition between two sections
+     * @param {Section} toDismiss 
+     * @param {Section} toShow 
+     * @param {*} data 
+     * @param {*} clear 
+     * @param {*} text 
+     */
+    function transitionRound(toDismiss, toShow, data, clear = null, text=null) {
+        let hideDiv = _('div', body, null, null, 'hideDiv')
+
+        if(text)
+            _('div', hideDiv, text, null, 'transitionDiv')
+
+        setTimeout(() => {
+            if(clear) 
+                resetAllCat()
+            if(data)
+                createGame(data)
+            dismiss(toDismiss)
+            show(toShow)
+            scrollTop()
+            hideDiv.style.animation = 'reverseFullWidth 1s forwards'
+            setTimeout(() => {
+                hideDiv.remove()
+            }, 1500)
+        }, 1600)
+    }
+
+    /**
+     * Check if player is actual player
+     * @param {player} player 
+     * @returns bool
+     */
+    function isActualPlayer(player) {
+        if(player.uuid == sessionStorage.getItem('uuid')) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Check if player is admin
+     * @param {player} player 
+     * @returns bool
+     */
+    function isAdmin(player) {
+        if(player.modo) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Scroll to top
+     */
+    function scrollTop() {
+        window.scrollTo(0, 0)
+    }
+
+    /**
+     * Init login page
+     */
+    function initLogin() {
+        loginInput.addEventListener('keyup', (event) => {
+            if(loginInput.value != "") {
+                createRoom.disabled = false;
+                
+                if (event.keyCode === 13 ) {
+                    socket.emit("createRoom", { pseudo : loginInput.value})
+                }
+
+            } else {
+                createRoom.disabled = true;
+            }
+        })
+    
+        createRoom.addEventListener('click', () => {
+            socket.emit("createRoom", { pseudo : loginInput.value})
+        })
+
+        socket.on('roomCreated', (data) => {
+            room = data.room
+            socket.emit("getData", null)
+        })
+    }
+
+    /**
+     * Init waiting room page
+     */
+    function initWaitingRoom() {
+        for(let title of waitingTitle) {
+            title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
+        }
+
+        link.value = window.location + 'r/' + room
+    
+        link.addEventListener('click', () => {
+            link.select();
+            link.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+        })
+
+        link.addEventListener('click', () => {
+            let save = clickMe.innerHTML
+            clickMe.innerHTML = "COPIÉ !"
+            setTimeout(() => {
+                clickMe.innerHTML = save
+            },2000)
+        })
+
+        ready_button.disabled = false
+        ready_button.classList.remove('ready_click')
+    
+        ready_button.addEventListener('click', () => {
+            ready_button.classList.toggle('ready_click')
+            socket.emit("switchState", null)
+        })
+    }
+
+    /**
+     * Reset waiting room page
+     */
+    function resetWaitingRoom() {
+        ready_button.disabled = false
+        ready_button.classList.remove('ready_click')
+    }
+
+    /**
+     * Refresh player list
+     * @param {Array[player]} playerList 
+     * @param {DOM Element} elem 
+     */
+    function refreshPlayerList(playerList, elem) {
+        let localPlayer = JSON.parse(sessionStorage.getItem('player'))
+        
+        for(let nb of waitingNumbers) {
+            nb.innerHTML = playerList.length + " JOUEUR(S)"
+        }
+        for(let player of playerList) {
+            let playerLi = createPlayerDiv(player.pseudo, elem)
+
+            if(isAdmin(localPlayer)) {
+                if(!isActualPlayer(player)) {
+                   let kickPlayer = _('div', playerLi, 'KICK', null, 'kickPlayer')
+                   kickPlayer.addEventListener('click', () => {
+                       socket.emit('kickPlayer', player.uuid)
+                   })
+                }
+            }
+
+            if(!player.ready) {
+                playerLi.classList.add("unready")
+            } else {
+                playerLi.classList.remove("unready")
+            }
+        }
+    }
+
+    /**
+     * Create player div in player list
+     * @param {*} pseudo 
+     * @param {DOM Element} elem 
+     * @returns DOM Element
+     */
+    function createPlayerDiv(pseudo, elem) {
+        let div = _('div', elem, null, null, 'playerDivContent')
+        _("h2", div, pseudo)
+
+        return div
+    }
+
+    /**
+     * Refresh word list
+     * @param {Array[word]} wordList 
+     * @param {*} isAdmin 
+     */
+    function refreshWordList(wordList, isAdmin = false) {
+        words_div.innerHTML = ""
+
+        for(let word of wordList) {
+            let wordContainer = _('div', words_div, null, null, "wordContainer")
+            _("div", wordContainer, word, null, "wordPartie")
+
+            if(isAdmin) {
+                wordContainer.classList.add('adminClassRemove')
+
+                wordContainer.addEventListener('click', () => {
+                    socket.emit('removeWord', word)
+                })
+            }
+        }
+
+        words_div.scrollTop = words_div.scrollHeight;
+    }
+
+    /**
+     * Create modal to join the room
+     */
+    function newModalConnect() {
+        let pseudo = document.createElement('input')
+        pseudo.placeholder = "Pseudo"
+        let button = document.createElement('button')
+        button.innerHTML = "VALIDER"
+        button.disabled = true
+
+        var hiden = _('div', body, null, null, "modelHide")
+        var div = _('div', hiden, null, null, "modalNewPlayer")
+        _('h3', div, "Rejoindre")
+
+        let inputContainer = _('div', div, null, null, 'modalContentInput')
+        inputContainer.appendChild(pseudo)
+        inputContainer.appendChild(button)
+
+        pseudo.addEventListener('keyup', (event) => {
+            if(pseudo.value != "") {
+                button.disabled = false;
+            } else {
+                button.disabled = true;
+            }
+        })
+
+        pseudo.addEventListener('keyup', (event) => {
+            if(pseudo.value != "") {
+                button.disabled = false;
+                
+                if (event.keyCode === 13 ) {
+                    socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
+                }
+
+            } else {
+                button.disabled = true;
+            }
+        })
+
+        button.addEventListener('click', () => {
+            socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
+        })
+
+        socket.on('removeModal', () => {
+            hiden.remove()
+            initWaitingRoom()
+            show(waitingRoomSection)
+        })
+    }
+
+    /**
+     * Create game page
+     * @param {*} game 
+     */
+    function createGame(game) {
+        for(let wr of waitingRound) {
+            wr.innerHTML = "Manche " + game.actualRound + '/' + game.maxRound
+        }
+
+        for(let ld of letterDisplay) {
+            ld.innerHTML = game.actualLetter
+        }
+
+        generateInput(game.wordList, game.actualLetter)
+    }
  
-    function nextRoundSetup(playerList) {
+    /**
+     * Setup players state 
+     * @param {Array[player]} playerList 
+     */
+    function setupPlayersState(playerList) {
         for(player of playerList) {
 
             let contentNR = _('div', playerNextRound, null, null , 'contentNR')
@@ -536,51 +682,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    socket.on('nextRound', (data) => {
-        transitionRound(resultSection, gameSection, data, true)
-    })
-
-    socket.on('endResults', (room) => {
-        room.playerList.sort(function(a, b){
-            return b.score - a.score;
-        });
-
-        let replayButton = _('button', replayDiv, 'REJOUER', null, 'replayButton')
-        replayButton.addEventListener('click', () => {
-            socket.emit('replayGame', null)
-        })
-
-        for(let i=0; i<room.playerList.length; i++) {
-
-            if(i==0)
-            createDiv(room.playerList[0], "gold", 1)
-            if(i==1)
-            createDiv(room.playerList[1], "silver", 2)
-            if(i==2)
-            createDiv(room.playerList[2], "copper", 3)
-            if(i>=3)
-            createDiv(room.playerList[i], "other", i+1)
-
-        }
-        hideAll()
-        show(scoreSection)
-    })
-
-    socket.on('replayGame', (data) => {
-        resetAllCat()
-        transitionRound(scoreSection, waitingRoomSection)
-        socket.emit('replayRefresh', null)
-        //initWaitingRoom()
-        resetWaitingRoom()
-    })
-
-    function createDiv(player, rank, nb) {
+    /**
+     * Create div for player on final results page
+     * @param {player} player 
+     * @param {*} rank 
+     * @param {*} nb 
+     */
+    function createPlayerResultDiv(player, rank, nb) {
         let div = _('div', top, null, null, rank)
         _('div', div, '#' + nb, null, "rank")
         _('div', div, player.pseudo, null, 'topPseudo')
         _('div', div, player.score + " PTS.", null, 'topScore')
     }
 
+    /**
+     * Reset pages
+     */
     function resetAllCat() {
         // reset waiting
 
@@ -599,6 +716,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+    /**
+     * Hide all pages
+     */
     function hideAll() {
         dismiss(loginSection)
         dismiss(waitingRoomSection)
@@ -608,6 +728,11 @@ document.addEventListener('DOMContentLoaded', () => {
         dismiss(scoreSection)
     }
 
+    /**
+     * Create input on game
+     * @param {Array[word]} wordList 
+     * @param {*} actualLetter 
+     */
     function generateInput(wordList, actualLetter) {
         var inputList = []
         for(let word of wordList) {
@@ -653,12 +778,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Show section
+     * @param {Section} section 
+     */
     function show(section) {
         section.classList.remove('none')
     }
 
+    /**
+     * Hide section
+     * @param {Section} section 
+     */
     function dismiss(section) {
         section.classList.add('none')
+    }
+
+    /**
+     * Display error
+     * @param {String} error 
+     */
+    function showError(error) {
+        hideAll()
+        errorPage.querySelector('h1').innerHTML = error
+        show(errorPage)
+    }
+
+    /**
+     * Add new word to word list
+     * @param {New word} value 
+     */
+    function addNewWord(value) {
+        if(value != "") {
+            socket.emit('addNewWord', value)
+            value = ""
+        }
     }
 
 })

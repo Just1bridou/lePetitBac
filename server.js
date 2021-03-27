@@ -12,20 +12,24 @@ app.use("/js", express.static( __dirname + "/js"))
 app.use("/pages", express.static( __dirname + "/pages"))
 
 app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/pages/waitingRoom.html")
+    res.sendFile(__dirname + "/pages/game.html")
 })
 
 app.get('/r/:code', function (req, res) {
-    res.sendFile(__dirname + "/pages/waitingRoom.html")
+    res.sendFile(__dirname + "/pages/game.html")
 });
 
-//----------------------------- SOCKETS
-
+// roomList contain all rooms of the server
 let roomList = []
+
+// sockets contain all player's socket of the server
 let sockets = {}
 
 io.on("connect", (socket) => {
 
+    /**
+     * Player wants to created new room
+     */
     socket.on("createRoom", (data) => {
 
         let room = generateRoomToken()
@@ -36,19 +40,21 @@ io.on("connect", (socket) => {
             "uuidPlayer": uuid
         }
 
+        let player = {
+            "uuid": uuid, 
+            "pseudo": data.pseudo, 
+            "modo": true,
+            "ready": false,
+            "score": 0,
+            "dataSend": false,
+            "data": [],
+        }
+
         roomList.push(
             {
                 "room": room, 
                 "playerList": [
-                    {
-                        "uuid": uuid, 
-                        "pseudo": data.pseudo, 
-                        "modo": true,
-                        "ready": false,
-                        "score": 0,
-                        "dataSend": false,
-                        "data": [],
-                    }
+                    player
                 ],
 
                 "wordList": [
@@ -80,10 +86,16 @@ io.on("connect", (socket) => {
         socket.room = room
         sockets[uuid] = socket
         
-        socket.emit("saveUUID", uuid)
+        // Client save UUID in sessionStorage
+        socket.emit("saveUUID", player)
+
+        // Room created
         socket.emit("roomCreated", params)
     })
 
+    /**
+     * Send game's data to client
+     */
     socket.on("getData", (data) => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -95,6 +107,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Replay an other game
+     */
     socket.on("replayRefresh", (data) => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -104,6 +119,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Add new player to room
+     */
     socket.on("newPlayer", (params) => {
 
         let room = getRoom(roomList, params.room)
@@ -116,25 +134,30 @@ io.on("connect", (socket) => {
             socket.uuid = uuid
             sockets[uuid] = socket
 
+            let player = {
+                "uuid": uuid, 
+                "pseudo": params.pseudo, 
+                "modo": false,
+                "ready": false,
+                "score": 0,
+                "dataSend": false,
+                "data": [],
+            }
+
             listPlayer.push(
-                {
-                    "uuid": uuid, 
-                    "pseudo": params.pseudo, 
-                    "modo": false,
-                    "ready": false,
-                    "score": 0,
-                    "dataSend": false,
-                    "data": [],
-                }
+                player
             )
-            socket.emit("saveUUID", uuid)
+            socket.emit("saveUUID", player)
             socket.emit("removeModal")
 
             refreshAllPlayersList(sockets, listPlayer)
-            refreshAllPlayersWordsList(sockets, listPlayer, room)
+            socket.emit('wordList', getRoom(roomList, socket.room))
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Change rounds of the game
+     */
     socket.on('changeMaxRound', (newMax) => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -142,6 +165,9 @@ io.on("connect", (socket) => {
         }
     })
 
+    /**
+     * Switch ready state of player
+     */
     socket.on("switchState", (data) => {
         let room = getRoom(roomList, socket.room)
         
@@ -166,6 +192,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Player ready for next round
+     */
     socket.on("nextRoundPlayer", (data) => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -189,6 +218,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Stop the game
+     */
     socket.on("resultStop", (results) => {
         let room = getRoom(roomList, socket.room)
 
@@ -211,6 +243,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Player disconnect from room
+     */
     socket.on("disconnect", (data) => {   
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -233,17 +268,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
-    function deleteRoom(roomDel) {
-        for (var i = 0; i < roomList.length; i++){
-            if(roomList[i].room == roomDel.room) {
-                let index = roomList.indexOf(roomList[i]);
-                if (index > -1) {
-                    roomList.splice(index, 1);
-                }
-            }
-        }
-    }
-
+    /**
+     * Check if room exist
+     */
     socket.on('checkRoomExist', (room) => {
         for(let r of roomList) {
             if(r.room == room) {
@@ -259,6 +286,9 @@ io.on("connect", (socket) => {
         socket.emit('error', 'roomExist')
     })
 
+    /**
+     * Add a new word to wordList
+     */
     socket.on("addNewWord", word => {
         let room = getRoom(roomList, socket.room)
 
@@ -271,6 +301,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Remove word from wordList
+     */
     socket.on("removeWord", word => {
         let room = getRoom(roomList, socket.room)
 
@@ -283,6 +316,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Stop all players (when player click on STOP)
+     */
     socket.on('stopAllPlayer', data => {
         let room = getRoom(roomList, socket.room)
 
@@ -296,6 +332,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * When player click on word's case (when player's word is false)
+     */
     socket.on('editUserCase', data => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -316,6 +355,9 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Game is replaying
+     */
     socket.on("replayGame", (data) => {
         let room = getRoom(roomList, socket.room)
         if(room) {
@@ -324,9 +366,50 @@ io.on("connect", (socket) => {
             replayAllPlayers(room.playerList)
         } else {socket.emit('error', 'serverError')}
     })
+    
+    /**
+     * Kick player from room
+     */
+    socket.on('kickPlayer', (uuid) => {
+        let room = getRoom(roomList, socket.room)
+            if(room) {
+                let listPlayer = room.playerList
+                for (var i = 0; i < listPlayer.length; i++){
+                    if(listPlayer[i].uuid == uuid) {
+                        let index = listPlayer.indexOf(listPlayer[i]);
+                        if (index > -1) {
+                            listPlayer.splice(index, 1);
+                        }
+                        sockets[uuid].emit('error', 'kicked')
+                        refreshAllPlayersList(sockets, listPlayer)
+                    }
+                }
+            } else {socket.emit('error', 'serverError')}
+    })
 
 })
 
+/**
+ * 
+ * @param {Room} roomDel 
+ * Remove room from roomList
+ */
+function deleteRoom(room) {
+    for (var i = 0; i < roomList.length; i++){
+        if(roomList[i].room == room.room) {
+            let index = roomList.indexOf(roomList[i]);
+            if (index > -1) {
+                roomList.splice(index, 1);
+            }
+        }
+    }
+}
+
+/**
+ * 
+ * @param {Room} room 
+ * Reset the game and the player's score
+ */
 function resetRoom(room) {
 
     room.actualLetter = ""
@@ -342,33 +425,54 @@ function resetRoom(room) {
     }
 }
 
+/**
+ * 
+ * @param {Room} room 
+ * Compute the score for each player of the round
+ */
 function reworkScorePlayer(room) {
     for(let player of room.playerList) {
         for(let input of player.data) {
-            if(noteFavorite(input.notes) == '1') {
-                player.score += 10
-            } else if(noteFavorite(input.notes) == '5') {
-                player.score += 5
-            }
+            player.score += computeNote(input.notes)
         }
     }
 }
 
-function noteFavorite(notes) {
+/**
+ * 
+ * @param {Array[0|1]} notes 
+ * @returns Score of the player for one response
+ */
+function computeNote(notes) {
     let lgt = notes.length
     let zero = 0
+
+    // Compute total of "NO" response
     for(let note of notes) {
         if(note < 1)
             zero++
     }
 
+    // If player's response is 50% yes 50% no
     if(zero == lgt/2) {
-        return "5"
-    } else if(zero < lgt/2){
-        return "1"
+        return 5
+    } 
+    // If player's response is > 50% yes
+    else if(zero < lgt/2){
+        return 10
     }
+
+    // Else, player's response is < 50% yes
+    return 0
 }
 
+/**
+ * Refresh result's line of player for each room players
+ * @param {Array[socket]} sockets 
+ * @param {Array[player]} listPlayer 
+ * @param {player} player 
+ * 
+ */
 function refreshChoice(sockets, listPlayer, player) {
     for (var i = 0; i < listPlayer.length; i++){
         let uuid = listPlayer[i].uuid
@@ -376,6 +480,10 @@ function refreshChoice(sockets, listPlayer, player) {
     }
 }
 
+/**
+ * Emit "replayGame" to all clients (game is replaying)
+ * @param {Array[player]} listPlayer 
+ */
 function replayAllPlayers(listPlayer) {
     for (var i = 0; i < listPlayer.length; i++){
         let uuid = listPlayer[i].uuid
@@ -383,6 +491,11 @@ function replayAllPlayers(listPlayer) {
     }
 }
 
+/**
+ * 
+ * @param {Array[socket]} sockets 
+ * @param {Array[player]} listPlayer 
+ */
 function refreshAllPlayersList(sockets, listPlayer) {
     for (var i = 0; i < listPlayer.length; i++){
 
@@ -391,6 +504,12 @@ function refreshAllPlayersList(sockets, listPlayer) {
     }
 }
 
+/**
+ * 
+ * @param {UUID} uuid 
+ * @param {RoomCode} code 
+ * @returns index of player in room's playerList
+ */
 function getIndex(uuid, code) {
     let room = getRoom(roomList, code)
     let playerList = room.playerList
@@ -401,6 +520,12 @@ function getIndex(uuid, code) {
     }
 }
 
+/**
+ * Get player in room with UUID
+ * @param {UUID} uuid 
+ * @param {RoomCode} code 
+ * @returns player
+ */
 function getPlayer(uuid, code) {
     let room = getRoom(roomList, code)
     let playerList = room.playerList
@@ -411,6 +536,11 @@ function getPlayer(uuid, code) {
     }
 }
 
+/**
+ * Refresh player's list on Results section
+ * @param {Array[socket]} sockets 
+ * @param {Array[player]} listPlayer 
+ */
 function refreshAllPlayersListNextRound(sockets, listPlayer) {
     for (var i = 0; i < listPlayer.length; i++){
         let uuid = listPlayer[i].uuid
@@ -418,6 +548,12 @@ function refreshAllPlayersListNextRound(sockets, listPlayer) {
     }
 }
 
+/**
+ * Refresh word list on Waiting screen for all players
+ * @param {Array[socket]} sockets 
+ * @param {Array[player]} listPlayer 
+ * @param {ROom} room 
+ */
 function refreshAllPlayersWordsList(sockets, listPlayer, room) {
     for (var i = 0; i < listPlayer.length; i++){
 
@@ -430,6 +566,11 @@ function refreshAllPlayersWordsList(sockets, listPlayer, room) {
     }
 }
 
+/**
+ * Display Result section for all players
+ * @param {Array[socket]} sockets 
+ * @param {Room} room 
+ */
 function displayResultsAll(sockets, room) {
     let listPlayer = room.playerList
     for (var i = 0; i < listPlayer.length; i++){
@@ -438,6 +579,11 @@ function displayResultsAll(sockets, room) {
     }
 }
 
+/**
+ * Start game for all player
+ * @param {Array[socket]} sockets 
+ * @param {Array[player]} listPlayer 
+ */
 function allPlayersReady(sockets, listPlayer) {
     for (var i = 0; i < listPlayer.length; i++){
 
@@ -447,6 +593,11 @@ function allPlayersReady(sockets, listPlayer) {
     resetReady(listPlayer)
 }
 
+/**
+ * Start a new round
+ * @param {Array[socket]} sockets 
+ * @param {Room} room 
+ */
 function allPlayersReadyNextRound(sockets, room) {
     room.actualRound = room.actualRound + 1
     reworkScorePlayer(room)
@@ -457,6 +608,11 @@ function allPlayersReadyNextRound(sockets, room) {
     }
 }
 
+/**
+ * New round
+ * @param {Array[socket]} sockets 
+ * @param {Room} room 
+ */
 function nextRound(sockets, room) {
     generateLetter(room)
     let listPlayer = room.playerList
@@ -467,6 +623,11 @@ function nextRound(sockets, room) {
     resetReady(listPlayer)
 }
 
+/**
+ * Game is finish
+ * @param {Array[socket]} sockets 
+ * @param {Room} room 
+ */
 function finishGame(sockets, room) {
     let listPlayer = room.playerList
     for (var i = 0; i < listPlayer.length; i++){
@@ -476,6 +637,10 @@ function finishGame(sockets, room) {
     }
 }
 
+/**
+ * Reset ready state & data for players
+ * @param {Array[player]} listPlayer 
+ */
 function resetReady(listPlayer) {
     for (var i = 0; i < listPlayer.length; i++){
         listPlayer[i].ready = false
@@ -483,6 +648,12 @@ function resetReady(listPlayer) {
     }
 }
 
+/**
+ * Get room from RoomCode
+ * @param {roomList} roomList 
+ * @param {RoomCode} code 
+ * @returns room
+ */
 function getRoom(roomList, code) {
     for (var i = 0; i < roomList.length; i++){
         if (roomList[i].room == code){
@@ -491,6 +662,10 @@ function getRoom(roomList, code) {
     }
 }
 
+/**
+ * Generate room token
+ * @returns token
+ */
 function generateRoomToken() {
     var firstPart = (Math.random() * 46656) | 0;
     var secondPart = (Math.random() * 46656) | 0;
@@ -499,6 +674,10 @@ function generateRoomToken() {
     return firstPart + secondPart;
 }
 
+/**
+ * Generate a letter who's not in history
+ * @param {Room} room 
+ */
 function generateLetter(room) {
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     let res = ""
