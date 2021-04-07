@@ -671,6 +671,14 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     background-color: #F97676 !important;
 }
 
+.canceledWord {
+    text-decoration: line-through red 3px;
+}
+
+.noClick {
+    cursor: initial !important;
+}
+
 .userCase {
     height: 25px;
     width: 25px;

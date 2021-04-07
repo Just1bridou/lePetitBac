@@ -387,7 +387,15 @@ io.on("connect", (socket) => {
             } else {socket.emit('error', 'serverError')}
     })
 
+    /**
+     * Callback ready state of user
+     */
+    socket.on('userIsReady', (cb) => { 
+        let player = getPlayer(socket.uuid, socket.room)
+        cb(player.ready); 
+    });
 })
+
 
 /**
  * 
@@ -433,9 +441,41 @@ function resetRoom(room) {
 function reworkScorePlayer(room) {
     for(let player of room.playerList) {
         for(let input of player.data) {
-            player.score += computeNote(input.notes)
+            let tempScore = computeNote(input.notes)
+            if(tempScore > 0) {
+                tempScore += tempScore / countSameWords(input, room.playerList)
+            }
+            player.score += tempScore
         }
     }
+}
+
+function countSameWords(inputPlayer, players) {
+    let totalCount = 0
+    let wordRef = normalizeWord(inputPlayer.value)
+
+    for(let player of players) {
+        for(let input of player.data) {
+            if(inputPlayer.pos == input.pos) {
+                if(wordRef == normalizeWord(input.value)) {
+                    totalCount++
+                }
+            }            
+        }
+    }
+
+    return totalCount
+}
+
+/**
+ * Normalize word
+ * @param {String} word 
+ * @returns 
+ */
+function normalizeWord(word) {
+    word = word.toLowerCase()
+    word = word.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    return word
 }
 
 /**

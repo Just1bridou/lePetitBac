@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io()
     
+    const TIME_BEFORE_STARTING = 1
+
     var body = document.querySelector('body')
     
     var uuid = sessionStorage.getItem('uuidPlayer');
@@ -200,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let hideDiv = _('div', body, null, null, 'hideDiv')
         let countDiv = _('div', body, null, null, 'countDiv')
         hideDiv.classList.add('completeWidth')
-        var counter = 6;
+        var counter = TIME_BEFORE_STARTING;
         var interval = setInterval(function() {
             counter--;
 
@@ -279,17 +281,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 let tr = _('div', table, null, null, "lineContent")
 
                 _("div", tr, player.pseudo)
-                _("div", tr, input.value)
+                let value = _("div", tr, input.value)
 
                 let userDivContent = _("div", tr)
                 let userDiv = _("div", userDivContent, null, null, 'userCase')
 
+                isCanceled(value, inputNotes)
+
                 userDiv.addEventListener('click', () => {
-                    userDiv.classList.toggle('falseCase')
-                    socket.emit('editUserCase', {
-                        'uuid': player.uuid,
-                        'input': input
-                    } )
+                    socket.emit('userIsReady', ready => {
+                        if(!ready) {
+                            userDiv.classList.toggle('falseCase')
+                            socket.emit('editUserCase', {
+                                'uuid': player.uuid,
+                                'input': input
+                            } )
+                        }
+                    });
                 })
 
                 if(!inputNotes[0]) {
@@ -314,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     } else {
                                         r.classList.add('falseCase')
                                     }
+                                    isCanceled(value, np.notes)
                                 }
                             }
                         }
@@ -329,6 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {
             clicked = true
             nr.classList.add('clickedNR')
             socket.emit("nextRoundPlayer", null)
+
+            document.querySelectorAll('.userCase').forEach(userCase => {
+                userCase.classList.add('noClick')
+            })
         })
 
         setupPlayersState(room.playerList)
@@ -398,6 +411,26 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.emit('replayRefresh', null)
         resetWaitingRoom()
     })
+
+    /**
+     * Cancel a word if total false notes > 50%
+     * @param {Element} el 
+     * @param {Array[int]} notes 
+     */
+    function isCanceled(el, notes) {
+
+        let totalPos = 0
+        for (let note of notes) {
+            if(note)
+            totalPos++
+        }
+
+        if(totalPos < notes.length / 2) {
+            el.classList.add('canceledWord')
+        } else {
+            el.classList.remove('canceledWord')
+        }
+    }
 
     /**
      * Make transition between two sections
