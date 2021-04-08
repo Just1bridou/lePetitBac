@@ -3,6 +3,9 @@ let socketio = require("socket.io")
 let http = require("http")
 const { v4: uuidv4 } = require('uuid');
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 let app = express()
 let server = http.Server(app)
 let io = socketio(server)
@@ -727,5 +730,5 @@ function generateLetter(room) {
     room.actualLetter = res
     room.historyLetter.push(res)
  }
-
-server.listen(1331)
+ 
+server.listen(process.env.PORT)
