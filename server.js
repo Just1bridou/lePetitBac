@@ -731,4 +731,6 @@ function generateLetter(room) {
     room.historyLetter.push(res)
  }
 
+console.log("Running on port: " + process.env.PORT)
+
 server.listen(process.env.PORT)
