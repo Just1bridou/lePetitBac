@@ -4,7 +4,7 @@
     src: url("AVENIR/AvenirNextLTPro-Bold.otf")
 }
 
-@media screen and (min-width: 769px) {
+@media screen and (max-width: 768px) {
 
 * {
     margin: 0;
@@ -38,6 +38,11 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 /* LOGIN */
 
+.svgLogin {
+    top: 0;
+    position: absolute;
+}
+
 #login {
     position: absolute;
     height: 100%;
@@ -45,21 +50,13 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     background: linear-gradient(0.25turn, #63F881, #2455DC);
 }
 
-.svgLogin {
-    top: 0;
-    position: absolute;
-}
-
 #login h1 {
     position: absolute;
     top: 10%;
-    color: white;
-    font-size: 120px;
+    color: rgb(255, 255, 255);
+    font-size: 60px;
     width: 100%;
     text-align: center;
-    text-shadow: 10px 9px 4px rgb(0 0 0 / 48%);
-    -webkit-text-shadow: 10px 9px 4px rgb(0 0 0 / 48%);
-    -moz-text-shadow: 10px 9px 4px rgb(0 0 0 / 48%);
 }
 
 #login .divContent {
@@ -67,7 +64,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     width: 100%;
     display: flex;
     justify-content: space-around;
-    top: 40%;
+    top: 30%;
 }
 
 .loginButtonContent {
@@ -75,8 +72,8 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     flex-direction: column;
     text-align: center;
     align-items: center;
-    width: 45%;
-    max-width: 45%;
+    width: 98%;
+    max-width: 90%;
 }
 
 #login_pseudo {
@@ -86,7 +83,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     border-radius: 30px;
     padding-top: 10px;
     padding-bottom: 10px;
-    font-size: 40px;
+    font-size: 25px;
     border-radius: 100px;
     color: #ffffff;
     
@@ -113,7 +110,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     background-color: #76ACF9;
     border-radius: 30px;
     padding: 10px;
-    font-size: 40px;
+    font-size: 25px;
     border-radius: 100px;
     color: white;
     cursor: pointer;
@@ -140,18 +137,21 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .waiting_title {
+    font-size: 20px;
     text-align: left;
     flex: 1 1 0px;
     margin: 20px;
 }
 
 .waitingRound {
+    font-size: 20px;
     text-align: left;
     flex: 1 1 0px;
     margin: 20px;
 }
 
 .waiting_numbers {
+    font-size: 20px;
     text-align: right;
     flex: 1 1 0px;
     margin: 20px;
@@ -164,14 +164,14 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 #waitingRoom .body {
     margin-top: 30px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-around;
     min-height: 60vh;
 }
 
 #ready_button {
     position: relative;
-    width: 25%;
+    width: 90%;
     left: 50%;
     transform: translateX(-50%);
     margin-top: 20px;
@@ -180,7 +180,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     background-color: #F97676;
     border-radius: 30px;
     padding: 10px;
-    font-size: 35px;
+    font-size: 25px;
     border-radius: 100px;
     color: white;
     cursor: pointer;
@@ -196,23 +196,27 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .copyLink {
+    align-items: center;
     flex: 1 1 0px;
     background-color: rgb(247, 189, 82);
     overflow: hidden;
-    height: 50px;
+    height: 60px;
     position: relative;
     border-radius: 40px;
     margin-top: 30px;
     margin-bottom: 30px;
+    padding-top: 5px;
 }
 
 .clickMe {
     position: absolute;
     height: 100%;
     width: 100%;
-    line-height: 50px;
     text-align: center;
-    font-size: 20px;
+    font-size: 13px;
+    line-break: auto;
+    align-items: center;
+    vertical-align: middle;
 }
 
 .copyLink:hover .clickMe{
@@ -253,24 +257,15 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     flex-direction: column;
     color: white;
     text-transform: uppercase;
-    left: 25%;
-    transform: translateX(-50%);
-    align-items: center;
-   /* border-right: 1px solid rgba(112, 112, 112, 0.86);*/
-    height: 59vh;
-    overflow-y: scroll;
 }
 
 .playerDivContent {
     margin-top: 10px;
-    height: 60px;
-    line-height: 60px;
+    height: auto;
+    line-height: 30px;
     border-radius: 100px;
-    width: 70%;
+    width: 90;
     background-color: #5EEC87;
-
-    justify-content: space-between;
-    display: flex;
 }
 
 .kickPlayer {
@@ -319,7 +314,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 #gameSettings h1 {
     text-align: center;
-    font-size: 55px;
+    font-size: 30px;
 }
 
 .settingsControls {
@@ -376,7 +371,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     margin-top: 30px;
     align-items: center;
     flex-direction: column;
-    height: 40vh;
+    max-height: 30vh;
     overflow-y: scroll;
     position: relative;
     left: 50%;
@@ -506,7 +501,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 
     text-align: center;
-    font-size: 200px;   
+    font-size: 100px;   
    /* position: absolute;
     top: 50%;
     left: 50%;
@@ -533,7 +528,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .countDiv {
-    font-size: 200px;
+    font-size: 100px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -546,7 +541,9 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .transitionDiv {
-    font-size: 90px;
+    width: 100%;
+    text-align: center;
+    font-size: 60px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -566,6 +563,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .letterDisplay {
+    font-size: 50px;
     color: #275DD8;
     background-color: white;
     padding-left: 30px;
@@ -574,7 +572,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 #gameContent {
-    width: 40%;
+    width: 90%;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
@@ -582,22 +580,22 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .answerContent {
-    margin-top: 55px;
+    margin-top: 35px;
 }
 
 .answerContent h3 {
     text-transform: uppercase;
     color: #343434;
-    font-size: 40px;
+    font-size: 26px;
 }
 
 .answerContent input {
     border: 6px solid #3074CB;
     border-radius: 100px;
     width: 100%;
-    padding: 10px;
-    font-size: 30px;
-    text-indent: 30px;
+    padding: 6px;
+    font-size: 27px;
+    text-indent: 20px;
     transition: 0.05s all ease-in-out;
 }
 
@@ -628,7 +626,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 #resultContent {
     position: relative;
-    width: 80%;
+    width: 90%;
     left: 50%;
     transform: translateX(-50%);
     margin-top: 50px;
@@ -640,6 +638,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     border-top: 2px solid #cecece;
     margin-top: 10px;
     padding-top: 10px;
+    font-size: 15px;
 }
 
 .tableResults>div {
@@ -710,7 +709,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 .wordResults h2 {
     color: #343434;
-    font-size: 40px;
+    font-size: 20px;
 }
 
 .tableInfos {
@@ -729,7 +728,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 #playerNextRound {
     margin-top: 50px;
     position: relative;
-    width: 80%;
+    width: 90%;
     left: 50%;
     transform: translateX(-50%);
     margin-bottom: 50px;
@@ -745,11 +744,11 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 .playerNR {
     background-color: #F97676;
-    font-size: 30px;
+    font-size: 18px;
     padding: 5px;
     border-radius: 100px;
     text-indent: 30px;
-    width: 40%;
+    width: 55%;
     color: white;
 }
 
@@ -758,6 +757,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .stateNR {
+    font-size: 18px;
     margin-left: 10px;
     color: #F97676;
 }
@@ -767,16 +767,13 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .nextRoundButton {
-    margin: 20px;
-    width: 40%;
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 30px;
+    margin-bottom: 20px;
+    width: 100%;
+    font-size: 25px;
     border: 5px solid #F97676;
     background-color: #F97676;
     border-radius: 30px;
-    padding: 10px;
+    padding: 5px;
     border-radius: 100px;
     color: white;
     cursor: pointer;
@@ -793,13 +790,13 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 #score h1 {
     margin-top: 50px;
     color: white;
-    font-size: 90px;
+    font-size: 40px;
     width: 100%;
     text-align: center;
 }
 
 .top {
-    width: 50%;
+    width: 90%;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
@@ -820,11 +817,11 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     text-transform: uppercase;
     display: flex;
     width: 100%;
-    padding: 20px;
+    padding: 10px;
     border-radius: 100px;
     justify-content: space-around;
     margin-bottom: 20px;
-    font-size: 30px;
+    font-size: 20px;
     color: white;
     box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
     -webkit-box-shadow: 10px 10px 15px 0px rgba(0,0,0,0.48);
@@ -855,7 +852,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .replayDiv {
-    width: 50%;
+    width: 90%;
     left: 50%;
     position: relative;
     transform: translateX(-50%);
