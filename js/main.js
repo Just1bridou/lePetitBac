@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io()
     
-    const TIME_BEFORE_STARTING = 1
+    const TIME_BEFORE_STARTING = 6
 
     var body = document.querySelector('body')
     
