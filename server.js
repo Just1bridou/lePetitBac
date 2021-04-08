@@ -446,7 +446,7 @@ function reworkScorePlayer(room) {
         for(let input of player.data) {
             let tempScore = computeNote(input.notes)
             if(tempScore > 0) {
-                tempScore += tempScore / countSameWords(input, room.playerList)
+                tempScore = tempScore / countSameWords(input, room.playerList)
             }
             player.score += tempScore
         }
@@ -498,11 +498,11 @@ function computeNote(notes) {
 
     // If player's response is 50% yes 50% no
     if(zero == lgt/2) {
-        return 5
+        return 50
     } 
     // If player's response is > 50% yes
     else if(zero < lgt/2){
-        return 10
+        return 100
     }
 
     // Else, player's response is < 50% yes
@@ -730,5 +730,5 @@ function generateLetter(room) {
     room.actualLetter = res
     room.historyLetter.push(res)
  }
- 
+
 server.listen(process.env.PORT)
