@@ -1,9 +1,11 @@
 let express = require("express")
 let socketio = require("socket.io")
 let http = require("http")
-const { v4: uuidv4 } = require('uuid');
 
+const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
+const fs = require('fs');
+
 dotenv.config();
 
 let app = express()
@@ -13,6 +15,8 @@ let io = socketio(server)
 app.use("/css", express.static( __dirname + "/css"))
 app.use("/js", express.static( __dirname + "/js"))
 app.use("/pages", express.static( __dirname + "/pages"))
+app.use("/images", express.static( __dirname + "/images/"))
+app.use("/avatar", express.static( __dirname + "/avatars/"))
 
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/pages/game.html")
@@ -27,6 +31,13 @@ let roomList = []
 
 // sockets contain all player's socket of the server
 let sockets = {}
+
+const ROOM_MODE = ["CLASSIC", "RANDOM"]
+const AVATARS = [
+    "/avatar/burger.png",
+    "/avatar/donut.png",
+    "/avatar/pizza.png"
+]
 
 io.on("connect", (socket) => {
 
@@ -46,6 +57,7 @@ io.on("connect", (socket) => {
         let player = {
             "uuid": uuid, 
             "pseudo": data.pseudo, 
+            "avatar": AVATARS[getRndInteger(0,AVATARS.length)],
             "modo": true,
             "ready": false,
             "score": 0,
@@ -72,6 +84,13 @@ io.on("connect", (socket) => {
 
                 "actualRound": 1,
                 "maxRound": 3,
+
+                /**
+                 * Room modes:
+                 * - CLASSIC
+                 * - RANDOM
+                 */
+                "mode": "CLASSIC",
 
                 /**
                  * Room states:
@@ -140,6 +159,7 @@ io.on("connect", (socket) => {
             let player = {
                 "uuid": uuid, 
                 "pseudo": params.pseudo, 
+                "avatar": AVATARS[getRndInteger(0,AVATARS.length)],
                 "modo": false,
                 "ready": false,
                 "score": 0,
@@ -189,6 +209,7 @@ io.on("connect", (socket) => {
             }
             if(allReady) {
                 generateLetter(room)
+                checkRoomMode(room)
                 allPlayersReady(sockets, listPlayer)
                 room.state = "game"
             }
@@ -397,8 +418,54 @@ io.on("connect", (socket) => {
         let player = getPlayer(socket.uuid, socket.room)
         cb(player.ready); 
     });
+
+    socket.on('userIsAdmin', (cb) => { 
+        let player = getPlayer(socket.uuid, socket.room)
+        cb(player.modo); 
+    });
+
+    /**
+     * 
+     */
+    socket.on("changeMode", (mode) => {
+        let room = getRoom(roomList, socket.room)
+        if(room) {
+            if(ROOM_MODE.includes(mode)) {
+                room.mode = mode
+            }
+            changeGameMode(room.playerList, room.mode, room.wordList)
+        } else {socket.emit('error', 'serverError')}
+    })
 })
 
+function checkRoomMode(room) {
+    switch (room.mode){
+        case "RANDOM":
+            room.wordList = getRandomCategories(6)
+            break;
+    }
+}
+
+function getRandomCategories(nb) {
+    var newWords = []
+    let categoriesRaw = fs.readFileSync('categories.json');
+    let categories = JSON.parse(categoriesRaw);
+    categories = categories.categories
+
+    while(newWords.length != 6) {
+        let i = getRndInteger(0, categories.length)
+        newWords.push(categories[i])
+        categories.splice(i, 1)
+    }
+    return newWords
+}
+
+function changeGameMode(listPlayer, mode, words) {
+    for (var i = 0; i < listPlayer.length; i++){
+        let uuid = listPlayer[i].uuid
+        sockets[uuid].emit('changeGameMode', mode, words, listPlayer[i])
+    }
+}
 
 /**
  * 
@@ -729,7 +796,11 @@ function generateLetter(room) {
     } while (room.historyLetter.includes(res))
     room.actualLetter = res
     room.historyLetter.push(res)
- }
+}
+
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min) ) + min;
+}
 
 console.log("Running on port: " + process.env.PORT)
 

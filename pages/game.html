@@ -47,15 +47,48 @@
         <h1 class="waiting_numbers"></h1>
     </section>
 
-    <button id="ready_button">Pret</button>
-
+    
     <section class="body">
-        <div id="player_list"></div>
+        <section class="playerDiv">
+            <div id="player_list"></div>
+            <button id="ready_button">Pret</button>
+        </section>
         <section id="gameSettings">
-            <div class="partie"></div>
-            <div id="gameContainer">
-                <ul id="wordDiv"></ul>
-            </div>
+
+            <section class="tabs">
+                <div class="titleGame">PARTIE</div>
+                <div class="titleConf darkBlueTabs">CONFIGURATION</div>
+            </section>
+
+            <section class="borderContainerTab">
+                <section class="gameContentTab">
+                    <ul id="wordDiv"></ul>
+                </section>
+            </section>
+
+            <section class="borderContainerTabConf none">
+                <section class="gameContentTab">
+
+                    <section class="modeChoiceContent">
+
+                        <div class="modeDiv classicMode selectedMode" value="CLASSIC">
+                            <img src="/images/crayon2.png">
+                            <div class="modeTitle">CLASSIQUE</div>
+                        </div>
+
+                        <div class="modeDiv randomMode" value="RANDOM">
+                            <div class="modeContent">?</div>
+                            <div class="modeTitle">ALÉATOIRE</div>
+                        </div>
+
+                    </section>
+        
+                    <section class="gameConfiguration">
+                        <div class="partie"></div>
+                    </section>
+
+                </section>
+            </section>
 
         </section>
     </section>
@@ -104,6 +137,7 @@
 
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/anim.js"></script>
     <script src="/js/socket.io.min.js"></script>
 </body>
 </html>

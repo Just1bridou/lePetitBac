@@ -33,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     var gameContainer = waitingRoomSection.querySelector('#gameContainer')
     var partieRoundNb = waitingRoomSection.querySelector('.partie')
 
+    var configrationModes = document.querySelectorAll('.modeDiv')
+
     // Game
     var gameSection = document.querySelector('#game')
     var gameContent = gameSection.querySelector('#gameContent')
@@ -62,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Init login page
      */
     initLogin()
-
+    
     /**
      * Check if room exist
      */
@@ -127,62 +129,28 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshWordList(data.wordList)
     })
 
+    socket.on('changeGameMode', (mode, words, player) =>{
+
+        switchMode(mode)
+
+        switch(mode) {
+            case "CLASSIC":
+                createClassicPannel(mode, words, player)
+                break;
+
+            case "RANDOM":
+                randomModeMessage()
+                break;
+        }
+    })
+
     /**
      * Create setting for the game 
      * - Add / remove words
      * - Change rounds
      */
     socket.on("gameSettings", (room) => {
-
-        let wordList = room.wordList
-        
-        partieRoundNb.innerHTML = ""
-        _('h1', partieRoundNb, 'PARTIE')
-
-        let cb = document.querySelector('.settingsControls')
-        if(cb) {
-            cb.remove()
-        }
-
-        refreshWordList(wordList, true)
-
-        let controlBox = _('div', gameSettings, null, null, "settingsControls")
-        let inputNewWord = _('input', controlBox)
-        inputNewWord.placeholder = "Ajouter un mot ..."
-        let addWordButton = _('button', controlBox, "Ajouter")
-        addWordButton.disabled = true
-
-        let inputRound = _('input', partieRoundNb, null, null, 'inputNbRound')
-        inputRound.value = room.maxRound
-        inputRound.type = 'number'
-        inputRound.max = 10
-        inputRound.min = 1
-        _('span', partieRoundNb, 'rounds', null, 'spanNbRound')
-
-        inputRound.addEventListener('change', () => {
-            socket.emit('changeMaxRound', inputRound.value)
-        })
-
-        inputNewWord.focus()
-
-        inputNewWord.addEventListener("keyup", function(event) {
-            if (event.keyCode === 13 ) {
-                addNewWord(inputNewWord.value)
-                inputNewWord.focus()
-            }
-        });
-
-        inputNewWord.addEventListener('keyup', (event) => {
-            if(inputNewWord.value != "") {
-                addWordButton.disabled = false;
-            } else {
-                addWordButton.disabled = true;
-            }
-        })
-    
-        addWordButton.addEventListener('click', () => {
-            addNewWord(inputNewWord.value)
-        })
+        createPannelSetting(room)
     })
 
     /**
@@ -412,6 +380,69 @@ document.addEventListener('DOMContentLoaded', () => {
         resetWaitingRoom()
     })
 
+    function createClassicPannel(mode, words, player) {
+        refreshWordList(words)
+        if (isAdmin(player)) {
+            createInputWord()
+        }
+    }
+
+    function createPannelSetting(room) {
+        let wordList = room.wordList
+
+        refreshWordList(wordList, true)
+        createInputWord()
+    }
+
+    function createInputWord() {
+
+        let cb = document.querySelector('.settingsControls')
+        if(cb) {
+            cb.remove()
+        }
+
+        partieRoundNb.innerHTML = ""
+        _('h1', partieRoundNb, 'PARTIE')
+
+        let controlBox = _('div', gameSettings.querySelector('.gameContentTab'), null, null, "settingsControls")
+        let inputNewWord = _('input', controlBox)
+        inputNewWord.placeholder = "Ajouter un mot ..."
+        let addWordButton = _('button', controlBox, "Ajouter")
+        addWordButton.disabled = true
+
+        let inputRound = _('input', partieRoundNb, null, null, 'inputNbRound')
+        inputRound.value = room.maxRound
+        inputRound.type = 'number'
+        inputRound.max = 10
+        inputRound.min = 1
+        _('span', partieRoundNb, 'rounds', null, 'spanNbRound')
+
+        inputRound.addEventListener('change', () => {
+            socket.emit('changeMaxRound', inputRound.value)
+        })
+
+        inputNewWord.focus()
+
+        inputNewWord.addEventListener("keyup", function(event) {
+            if (event.keyCode === 13 ) {
+                addNewWord(inputNewWord.value)
+                inputNewWord.focus()
+            }
+        });
+
+        inputNewWord.addEventListener('keyup', (event) => {
+            if(inputNewWord.value != "") {
+                addWordButton.disabled = false;
+            } else {
+                addWordButton.disabled = true;
+            }
+        })
+    
+        addWordButton.addEventListener('click', () => {
+            addNewWord(inputNewWord.value)
+        })
+    }
+
     /**
      * Cancel a word if total false notes > 50%
      * @param {Element} el 
@@ -520,6 +551,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * 
+     */
+    function initConfiguration() {
+        socket.emit('userIsAdmin', admin => {
+            if(admin) {
+                configrationModes.forEach(mode => {
+
+                    mode.classList.add('clickable')
+
+                    mode.addEventListener('click', () => {
+
+                        socket.emit('changeMode', mode.getAttribute('value'))
+
+                    })
+                })
+            }
+        });
+    }
+
+    /**
      * Init waiting room page
      */
     function initWaitingRoom() {
@@ -527,7 +578,8 @@ document.addEventListener('DOMContentLoaded', () => {
             title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
         }
 
-        link.value = window.location + 'r/' + room
+        let path = location.protocol + '//' + location.host
+        link.value = path + '/r/' + room
     
         link.addEventListener('click', () => {
             link.select();
@@ -550,6 +602,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ready_button.classList.toggle('ready_click')
             socket.emit("switchState", null)
         })
+
+        initConfiguration()
     }
 
     /**
@@ -572,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nb.innerHTML = playerList.length + " JOUEUR(S)"
         }
         for(let player of playerList) {
-            let playerLi = createPlayerDiv(player.pseudo, elem)
+            let playerLi = createPlayerDiv(player, elem)
 
             if(isAdmin(localPlayer)) {
                 if(!isActualPlayer(player)) {
@@ -597,9 +651,11 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {DOM Element} elem 
      * @returns DOM Element
      */
-    function createPlayerDiv(pseudo, elem) {
+    function createPlayerDiv(player, elem) {
         let div = _('div', elem, null, null, 'playerDivContent')
-        _("h2", div, pseudo)
+        let avatar = _("img", div)
+        avatar.src = player.avatar
+        _("h2", div, player.pseudo)
 
         return div
     }
@@ -626,6 +682,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         words_div.scrollTop = words_div.scrollHeight;
+    }
+
+    function randomModeMessage() {
+        let cb = document.querySelector('.settingsControls')
+        if(cb) {
+            cb.remove()
+        }
+        words_div.innerHTML = ""
+        _('h2', words_div, "Mode Aléatoire !")
+        _('p', words_div, "Les catégories restent inconnues jusqu'au 1er round")
+    }
+
+    function switchMode(modeWord) {
+        configrationModes.forEach(mode => {
+
+            mode.classList.remove('selectedMode')
+
+            if(mode.getAttribute('value') == modeWord) {
+                mode.classList.add('selectedMode')
+            }
+        });
     }
 
     /**
@@ -725,7 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let div = _('div', top, null, null, rank)
         _('div', div, '#' + nb, null, "rank")
         _('div', div, player.pseudo, null, 'topPseudo')
-        _('div', div, player.score + " PTS.", null, 'topScore')
+        _('div', div, Math.round(player.score) + " PTS.", null, 'topScore')
     }
 
     /**
