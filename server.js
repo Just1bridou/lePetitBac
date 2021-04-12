@@ -433,7 +433,7 @@ io.on("connect", (socket) => {
             if(ROOM_MODE.includes(mode)) {
                 room.mode = mode
             }
-            changeGameMode(room.playerList, room.mode, room.wordList)
+            changeGameMode(room.playerList, room.mode, room.wordList, room)
         } else {socket.emit('error', 'serverError')}
     })
 })
@@ -460,10 +460,10 @@ function getRandomCategories(nb) {
     return newWords
 }
 
-function changeGameMode(listPlayer, mode, words) {
+function changeGameMode(listPlayer, mode, words, room) {
     for (var i = 0; i < listPlayer.length; i++){
         let uuid = listPlayer[i].uuid
-        sockets[uuid].emit('changeGameMode', mode, words, listPlayer[i])
+        sockets[uuid].emit('changeGameMode', mode, words, listPlayer[i], room)
     }
 }
 

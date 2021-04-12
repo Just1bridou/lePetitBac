@@ -129,13 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshWordList(data.wordList)
     })
 
-    socket.on('changeGameMode', (mode, words, player) =>{
+    socket.on('changeGameMode', (mode, words, player, room) =>{
 
         switchMode(mode)
 
         switch(mode) {
             case "CLASSIC":
-                createClassicPannel(mode, words, player)
+                createClassicPannel(mode, words, player, room)
                 break;
 
             case "RANDOM":
@@ -380,10 +380,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resetWaitingRoom()
     })
 
-    function createClassicPannel(mode, words, player) {
+    function createClassicPannel(mode, words, player, room) {
         refreshWordList(words)
         if (isAdmin(player)) {
-            createInputWord()
+            createInputWord(room)
         }
     }
 
@@ -391,10 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let wordList = room.wordList
 
         refreshWordList(wordList, true)
-        createInputWord()
+        createInputWord(room)
     }
 
-    function createInputWord() {
+    function createInputWord(room) {
 
         let cb = document.querySelector('.settingsControls')
         if(cb) {

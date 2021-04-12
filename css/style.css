@@ -279,6 +279,13 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     overflow-y: scroll;
 }
 
+.canvasBackground {
+    width: 50%;
+    height: 90%;
+    position: absolute;
+    background-color: #9751E6;
+}
+
 .playerDivContent {
     margin-top: 10px;
   /*  height: 60px;*/
@@ -290,6 +297,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     display: flex;
     align-items: center;
     position: relative;
+    box-shadow: 10px 10px 15px 0px rgb(0 0 0 / 48%);
 }
 
 .playerDivContent img {
