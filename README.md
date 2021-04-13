@@ -5,4 +5,4 @@ Le Petit Bac game, Node.JS project
 ---
 
 Play here :
-http://justinwebsite.synology.me:1333/
+http://justinwebsite.synology.me:1334/
