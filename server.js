@@ -175,6 +175,7 @@ io.on("connect", (socket) => {
 
             refreshAllPlayersList(sockets, listPlayer)
             socket.emit('wordList', getRoom(roomList, socket.room))
+            notifyPlayers(listPlayer, player.pseudo, "JOIN")
         } else {socket.emit('error', 'serverError')}
     })
 
@@ -277,6 +278,7 @@ io.on("connect", (socket) => {
             for (var i = 0; i < listPlayer.length; i++){
                 if(listPlayer[i].uuid == socket.uuid) {
                     let index = listPlayer.indexOf(listPlayer[i]);
+                    notifyPlayers(listPlayer, listPlayer[i].pseudo, "LEAVE")
                     if (index > -1) {
                         listPlayer.splice(index, 1);
                     }
@@ -401,6 +403,7 @@ io.on("connect", (socket) => {
                 for (var i = 0; i < listPlayer.length; i++){
                     if(listPlayer[i].uuid == uuid) {
                         let index = listPlayer.indexOf(listPlayer[i]);
+                        notifyPlayers(listPlayer, listPlayer[i].pseudo, "KICK")
                         if (index > -1) {
                             listPlayer.splice(index, 1);
                         }
@@ -437,6 +440,13 @@ io.on("connect", (socket) => {
         } else {socket.emit('error', 'serverError')}
     })
 })
+
+function notifyPlayers(listPlayer, pseudo, reason) {
+    for (var i = 0; i < listPlayer.length; i++){
+        let uuid = listPlayer[i].uuid
+        sockets[uuid].emit('newNotification', pseudo, reason)
+    }
+}
 
 function checkRoomMode(room) {
     switch (room.mode){

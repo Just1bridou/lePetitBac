@@ -3,7 +3,7 @@
         "PRÉNOM",
         "FRUIT / FLEUR / LEGUME",
         "MÉTIER",
-        "CÉLEBRITÉ",
+        "CÉLEBRITÉ (nom de famille)",
         "MARQUE",
         "ANIMAL",
         "PAYS",
@@ -17,7 +17,7 @@
         "VETEMENT",
         "FROMAGE",
         "SITE INTERNET",
-        "PARTIE DU CORPS",
+        "ANATOMIE DU CORPS",
         "OBJET",
         "DEPARTEMENT FRANCAIS",
         "VERBE"

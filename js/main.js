@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Errors
     var errorPage = document.querySelector('#error')
 
+    // Notifications
+    var notificationsSection = document.querySelector('#notifications')
+
     if(sessionStorage.getItem('uuid')) {
         console.log('was a refresh')
     } else {
@@ -379,6 +382,38 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.emit('replayRefresh', null)
         resetWaitingRoom()
     })
+
+    socket.on('newNotification', (pseudo, reason) => {
+        switch(reason) {
+            case "JOIN":
+                createNotification(pseudo + " joined !")
+                break;
+
+            case "KICK":
+                createNotification(pseudo + " has been kicked !")
+                break;
+
+            case "LEAVE":
+                createNotification(pseudo + " leaved")
+                break;
+        }
+    })
+
+    function createNotification(text) {
+        let div = _('div', notificationsSection, null, null, 'notification')
+        _('h2', div, text)
+
+        setTimeout(() => {
+            div.classList.add('notificationPop')
+        },50)
+
+        setTimeout(() => {
+            div.classList.remove('notificationPop')
+            setTimeout(() => {
+                div.remove()
+            },500)
+        },3000)
+    }
 
     function createClassicPannel(mode, words, player, room) {
         refreshWordList(words)
