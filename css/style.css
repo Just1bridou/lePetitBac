@@ -298,14 +298,39 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     box-shadow: 10px 10px 15px 0px rgb(0 0 0 / 48%);
 }
 
-.playerDivContent img {
+.avatarContainer {
     background-color: white;
     padding: 5px;
     border-radius: 100%;
     margin: 5px;
-    height: auto;
+    height: 50px;
     width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+.avatar_square {
+    height: 60%;
+    width: 60%;
+    /* background-color: #5cdd5c; */
+    opacity: 0.8;
+}
+
+.avatar_round {
+    height: 60%;
+    width: 60%;
+    /* background-color: #5cdd5c; */
+    border-radius: 100%;
+    opacity: 0.8;
+}
+
+.avatar_triangle {
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 29px solid;
+    opacity: 0.8;
+  }
 
 .kickPlayer {
     margin-right: 30px;
@@ -414,7 +439,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 
 .borderContainerTabConf h4 {
     font-size: 45px;
-    margin-top: 50px;
+    /* margin-top: 50px; */
     margin-bottom: 10px;
 }
 

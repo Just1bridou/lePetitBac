@@ -79,8 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
             tRoom = sessionStorage.getItem('code')
         }
 
-        socket.room = tRoom
-        socket.emit('reconnectPlayer', { room: tRoom, uuid: sessionStorage.getItem('uuid') })
+        console.log(tRoom)
+
+        room = tRoom
+        socket.code = tRoom
+        socket.emit('reconnectPlayer', { code: tRoom, uuid: sessionStorage.getItem('uuid') })
     } else {
         console.log('its new player')
     }
@@ -124,8 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('player', JSON.stringify(player))
 
         console.log(sessionStorage)
+        room = code
 
-        socket.room = code
+        socket.code = code
         socket.uuid = player.uuid
     })
 
@@ -133,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Get room's data and init waiting room
      */
     socket.on('dataSender', (data) => {
-        refreshPlayerList(data.playerList, waitingPlayerList)
+        refreshPlayerList(data.playersList, waitingPlayerList)
         initWaitingRoom()
         transitionRound(loginSection, waitingRoomSection, null, null, 'JOINED !')
     })
@@ -142,8 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * Get room's data and init waiting room after refresh on page
      */
      socket.on('recoverRefresh', (data) => {
-        refreshPlayerList(data.playerList, waitingPlayerList)
-        initWaitingRoom()
+        refreshPlayerList(data.playersList, waitingPlayerList)
+        //initWaitingRoom()
         dismiss(loginSection)
         show(waitingRoomSection)
         //transitionRound(loginSection, waitingRoomSection, null, null, 'JOINED !')
@@ -152,9 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Refresh words list
      */
-    socket.on('wordList', (data) => {
+    socket.on('wordsList', (data) => {
         if (data)
-            refreshWordList(data.wordList)
+            refreshWordList(data.wordsList)
     })
 
     socket.on('changeGameMode', (mode, words, player, room) => {
@@ -220,6 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     /**
+     * Recover game page
+     */
+     socket.on('recoverGamePage', (game) => {
+        dismiss(loginSection)
+        dismiss(waitingRoomSection)
+        show(gameSection)
+        createGame(game)
+    })
+
+    /**
      * Stop the round (when someone click on STOP)
      */
     socket.on('stopRound', (data) => {
@@ -228,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < inputs.length; i++) {
             let notes = []
-            for (let player in data.playerList) {
+            for (let player in data.playersList) {
                 if (inputs[i].value == "") {
                     notes.push(0)
                 } else {
@@ -249,16 +263,18 @@ document.addEventListener('DOMContentLoaded', () => {
      * Display results page
      */
     socket.on('displayResults', (room) => {
-        let listPlayer = room.playerList
+        let playersList = room.playersList
         var clicked = false
+        dismiss(loginSection)
+        dismiss(waitingRoomSection)
         dismiss(gameSection)
         scrollTop()
         show(resultSection)
 
-        for (var i = 0; i < room.wordList.length; i++) {
+        for (var i = 0; i < room.wordsList.length; i++) {
 
             let div = _('div', resultContent, null, null, "wordResults")
-            _("h2", div, room.wordList[i])
+            _("h2", div, room.wordsList[i])
 
             let table = _('div', div, null, null, "tableResults")
 
@@ -269,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             _("div", info, "Réponse juste ?", null, "tableInfosContent")
             _("div", info, "Notes", null, "infoNotes")
 
-            for (let player of listPlayer) {
+            for (let player of playersList) {
 
                 let input = player.data[i]
                 let inputNotes = input.notes
@@ -340,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
         })
 
-        setupPlayersState(room.playerList)
+        setupPlayersState(room.playersList)
 
         socket.on('refreshNextRound', (data) => {
 
@@ -373,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Display final results
      */
     socket.on('endResults', (room) => {
-        room.playerList.sort(function (a, b) {
+        room.playersList.sort(function (a, b) {
             return b.score - a.score;
         });
 
@@ -382,16 +398,16 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit('replayGame', null)
         })
 
-        for (let i = 0; i < room.playerList.length; i++) {
+        for (let i = 0; i < room.playersList.length; i++) {
 
             if (i == 0)
-                createPlayerResultDiv(room.playerList[0], "gold", 1)
+                createPlayerResultDiv(room.playersList[0], "gold", 1)
             if (i == 1)
-                createPlayerResultDiv(room.playerList[1], "silver", 2)
+                createPlayerResultDiv(room.playersList[1], "silver", 2)
             if (i == 2)
-                createPlayerResultDiv(room.playerList[2], "copper", 3)
+                createPlayerResultDiv(room.playersList[2], "copper", 3)
             if (i >= 3)
-                createPlayerResultDiv(room.playerList[i], "other", i + 1)
+                createPlayerResultDiv(room.playersList[i], "other", i + 1)
 
         }
 
@@ -448,9 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createPannelSetting(room) {
-        let wordList = room.wordList
+        let wordsList = room.wordsList
 
-        refreshWordList(wordList, true)
+        refreshWordList(wordsList, true)
         createInputWord(room)
     }
 
@@ -569,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns bool
      */
     function isAdmin(player) {
-        if (player.modo) {
+        if (player.admin) {
             return true
         }
         return false
@@ -604,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         socket.on('roomCreated', (data) => {
-            room = data.room
+            code = data.code
             socket.emit("getData", null)
         })
     }
@@ -675,6 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ready_button.classList.remove('ready_click')
 
         ready_button.addEventListener('click', () => {
+            console.log("click")
             ready_button.classList.toggle('ready_click')
             socket.emit("switchState", null)
         })
@@ -692,16 +709,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Refresh player list
-     * @param {Array[player]} playerList 
+     * @param {Array[player]} playersList 
      * @param {DOM Element} elem 
      */
-    function refreshPlayerList(playerList, elem) {
+    function refreshPlayerList(playersList, elem) {
         let localPlayer = JSON.parse(sessionStorage.getItem('player'))
 
         for (let nb of waitingNumbers) {
-            nb.innerHTML = playerList.length + " JOUEUR(S)"
+            nb.innerHTML = playersList.length + " JOUEUR(S)"
         }
-        for (let player of playerList) {
+        for (let player of playersList) {
 
             if (player.disconnect) {
                 return
@@ -734,22 +751,36 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function createPlayerDiv(player, elem) {
         let div = _('div', elem, null, null, 'playerDivContent')
-        let avatar = _("img", div)
-        avatar.src = player.avatar
+        let avatarContainer = _("div", div, null, null, 'avatarContainer')
+
+        generateAvatar(player, avatarContainer)
+
         _("h2", div, player.pseudo)
 
         return div
     }
 
+    function generateAvatar(player, avatarContainer) {
+        let avatar = _('div', avatarContainer)
+
+        avatar.classList.add(player.avatar_shape)
+        
+        if(player.avatar_shape == "avatar_triangle") {
+            avatar.style.borderBottomColor = player.avatar_color
+        } else {
+            avatar.style.backgroundColor = player.avatar_color
+        }
+    }
+
     /**
      * Refresh word list
-     * @param {Array[word]} wordList 
+     * @param {Array[word]} wordsList 
      * @param {*} isAdmin 
      */
-    function refreshWordList(wordList, isAdmin = false) {
+    function refreshWordList(wordsList, isAdmin = false) {
         words_div.innerHTML = ""
 
-        for (let word of wordList) {
+        for (let word of wordsList) {
             let wordContainer = _('div', words_div, null, null, "wordContainer")
             _("div", wordContainer, word, null, "wordPartie")
 
@@ -817,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.disabled = false;
 
                 if (event.keyCode === 13) {
-                    socket.emit("newPlayer", { "pseudo": pseudo.value, "room": room })
+                    socket.emit("newPlayer", { "pseudo": pseudo.value, "code": room })
                 }
 
             } else {
@@ -826,15 +857,18 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         button.addEventListener('click', () => {
-            socket.emit("newPlayer", { "pseudo": pseudo.value, "room": room })
+            socket.emit("newPlayer", { "pseudo": pseudo.value, "code": room })
         })
 
         socket.on('removeModal', () => {
             hiden.remove()
-            initWaitingRoom()
-            show(waitingRoomSection)
         })
     }
+
+    socket.on("initWaitingRoom", () => {
+        initWaitingRoom()
+        show(waitingRoomSection)
+    })
 
     /**
      * Create game page
@@ -849,15 +883,15 @@ document.addEventListener('DOMContentLoaded', () => {
             ld.innerHTML = game.actualLetter
         }
 
-        generateInput(game.wordList, game.actualLetter)
+        generateInput(game.wordsList, game.actualLetter)
     }
 
     /**
      * Setup players state 
-     * @param {Array[player]} playerList 
+     * @param {Array[player]} playersList 
      */
-    function setupPlayersState(playerList) {
-        for (player of playerList) {
+    function setupPlayersState(playersList) {
+        for (player of playersList) {
 
             let contentNR = _('div', playerNextRound, null, null, 'contentNR')
             let playerDiv = _('div', contentNR, player.pseudo, null, 'playerNR')
@@ -921,12 +955,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Create input on game
-     * @param {Array[word]} wordList 
+     * @param {Array[word]} wordsList 
      * @param {*} actualLetter 
      */
-    function generateInput(wordList, actualLetter) {
+    function generateInput(wordsList, actualLetter) {
         var inputList = []
-        for (let word of wordList) {
+        for (let word of wordsList) {
             let div = _('div', gameContent, null, null, "answerContent")
             _('h3', div, word)
             let input = _('input', div)
@@ -955,7 +989,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Change input when press enter
         for (let i = 0; i < inputList.length; i++) {
             inputList[i].addEventListener('focus', (event) => {
-                console.log('focus')
                 inputList[i].addEventListener("keyup", function (event) {
                     if (event.keyCode === 13) {
                         if (i == inputList.length - 1) {
