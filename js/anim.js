@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.requestAnimationFrame(createImg);
     }
-    window.requestAnimationFrame(createImg);
+    //window.requestAnimationFrame(createImg);
 
     function getImage(img) {
         let imgParse = new Image();

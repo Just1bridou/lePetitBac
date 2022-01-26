@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io()
-    
+
     const TIME_BEFORE_STARTING = 6
 
     var body = document.querySelector('body')
-    
+
     var uuid = sessionStorage.getItem('uuidPlayer');
     var room = window.location.pathname.split('/')[2]
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Waiting Room
     var waitingRoomSection = document.querySelector('#waitingRoom')
- 
+
     var waitingPlayerList = waitingRoomSection.querySelector('#player_list')
 
     var waitingTitle = document.querySelectorAll('.waiting_title')
@@ -57,24 +57,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Notifications
     var notificationsSection = document.querySelector('#notifications')
 
-    if(sessionStorage.getItem('uuid')) {
-        console.log('was a refresh')
-    } else {
-        console.log('its new player')
-    }
-    
     /**
      * Init login page
      */
     initLogin()
-    
+
     /**
      * Check if room exist
      */
-    if(room) {
+    if (room) {
         socket.emit('checkRoomExist', room)
     } else {
         show(loginSection)
+    }
+
+    if (sessionStorage.getItem('uuid')) {
+        console.log('was a refresh')
+
+        let tRoom = room
+        if (tRoom == undefined || tRoom == 'null') {
+            tRoom = sessionStorage.getItem('code')
+        }
+
+        socket.room = tRoom
+        socket.emit('reconnectPlayer', { room: tRoom, uuid: sessionStorage.getItem('uuid') })
+    } else {
+        console.log('its new player')
     }
 
     /**
@@ -88,11 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
      * Display errors
      */
     socket.on('error', (error) => {
-        switch(error) {
+        switch (error) {
             case 'inGame':
                 showError("Game already started :/")
                 break;
-        
+
             case 'roomExist':
                 showError("No Room found :/")
                 break;
@@ -104,15 +112,21 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'kicked':
                 showError("Kicked from room :/")
                 break;
-        } 
+        }
     })
 
     /**
      * Save player's UUID on sessionStorage
      */
-    socket.on('saveUUID', (player) => {
+    socket.on('savePlayerInformations', (player, code) => {
         sessionStorage.setItem('uuid', player.uuid);
+        sessionStorage.setItem('code', code);
         sessionStorage.setItem('player', JSON.stringify(player))
+
+        console.log(sessionStorage)
+
+        socket.room = code
+        socket.uuid = player.uuid
     })
 
     /**
@@ -125,18 +139,29 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     /**
+     * Get room's data and init waiting room after refresh on page
+     */
+     socket.on('recoverRefresh', (data) => {
+        refreshPlayerList(data.playerList, waitingPlayerList)
+        initWaitingRoom()
+        dismiss(loginSection)
+        show(waitingRoomSection)
+        //transitionRound(loginSection, waitingRoomSection, null, null, 'JOINED !')
+    })
+
+    /**
      * Refresh words list
      */
     socket.on('wordList', (data) => {
-        if(data)
-        refreshWordList(data.wordList)
+        if (data)
+            refreshWordList(data.wordList)
     })
 
-    socket.on('changeGameMode', (mode, words, player, room) =>{
+    socket.on('changeGameMode', (mode, words, player, room) => {
 
         switchMode(mode)
 
-        switch(mode) {
+        switch (mode) {
             case "CLASSIC":
                 createClassicPannel(mode, words, player, room)
                 break;
@@ -174,13 +199,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let countDiv = _('div', body, null, null, 'countDiv')
         hideDiv.classList.add('completeWidth')
         var counter = TIME_BEFORE_STARTING;
-        var interval = setInterval(function() {
+        var interval = setInterval(function () {
             counter--;
 
             countDiv.innerHTML = counter
 
             if (counter == 0) {
-               // hideDiv.remove()
+                // hideDiv.remove()
                 hideDiv.style.animation = 'reverseFullWidth 1s forwards'
                 setTimeout(() => {
                     hideDiv.remove()
@@ -201,19 +226,19 @@ document.addEventListener('DOMContentLoaded', () => {
         var res = []
         let inputs = gameContent.querySelectorAll('input')
 
-        for(let i=0; i < inputs.length; i++) {
+        for (let i = 0; i < inputs.length; i++) {
             let notes = []
-            for(let player in data.playerList) {
-                if(inputs[i].value == "") {
+            for (let player in data.playerList) {
+                if (inputs[i].value == "") {
                     notes.push(0)
                 } else {
                     notes.push(1)
                 }
             }
             let current = {
-                "value":inputs[i].value, 
-                "notes":notes,
-                "pos":i
+                "value": inputs[i].value,
+                "notes": notes,
+                "pos": i
             }
             res.push(current)
         }
@@ -230,11 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollTop()
         show(resultSection)
 
-        for(var i=0; i< room.wordList.length; i++) {
+        for (var i = 0; i < room.wordList.length; i++) {
 
             let div = _('div', resultContent, null, null, "wordResults")
             _("h2", div, room.wordList[i])
-            
+
             let table = _('div', div, null, null, "tableResults")
 
             let info = _("div", table, null, null, "tableInfos")
@@ -244,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             _("div", info, "Réponse juste ?", null, "tableInfosContent")
             _("div", info, "Notes", null, "infoNotes")
 
-            for(let player of listPlayer) {
+            for (let player of listPlayer) {
 
                 let input = player.data[i]
                 let inputNotes = input.notes
@@ -261,34 +286,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 userDiv.addEventListener('click', () => {
                     socket.emit('userIsReady', ready => {
-                        if(!ready) {
+                        if (!ready) {
                             userDiv.classList.toggle('falseCase')
                             socket.emit('editUserCase', {
                                 'uuid': player.uuid,
                                 'input': input
-                            } )
+                            })
                         }
                     });
                 })
 
-                if(!inputNotes[0]) {
+                if (!inputNotes[0]) {
                     userDiv.classList.add('falseCase')
                 }
-                
+
                 let resultsContent = _("div", tr, null, null, 'resultsContent')
-                for(let i = 0; i < inputNotes.length; i++) {
+                for (let i = 0; i < inputNotes.length; i++) {
                     let r = _("div", resultsContent, null, null, 'resCase')
-                    if(inputNotes[i]) {
+                    if (inputNotes[i]) {
                         r.classList.remove('falseCase')
                     } else {
                         r.classList.add('falseCase')
                     }
 
                     socket.on('refreshChoice', (playerReceive) => {
-                        if(player.uuid == playerReceive.uuid) {
-                            for(let np of playerReceive.data) {
-                                if(input.pos == np.pos && playerReceive.index == i) {
-                                    if(np.notes[playerReceive.index]) {
+                        if (player.uuid == playerReceive.uuid) {
+                            for (let np of playerReceive.data) {
+                                if (input.pos == np.pos && playerReceive.index == i) {
+                                    if (np.notes[playerReceive.index]) {
                                         r.classList.remove('falseCase')
                                     } else {
                                         r.classList.add('falseCase')
@@ -318,11 +343,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setupPlayersState(room.playerList)
 
         socket.on('refreshNextRound', (data) => {
-            
+
             playerNextRound.innerHTML = ""
 
             let nr = _("button", playerNextRound, 'Ready', null, 'nextRoundButton')
-            if(clicked) {
+            if (clicked) {
                 nr.disabled = true
                 nr.classList.add('clickedNR')
             }
@@ -348,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Display final results
      */
     socket.on('endResults', (room) => {
-        room.playerList.sort(function(a, b){
+        room.playerList.sort(function (a, b) {
             return b.score - a.score;
         });
 
@@ -357,16 +382,16 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit('replayGame', null)
         })
 
-        for(let i=0; i<room.playerList.length; i++) {
+        for (let i = 0; i < room.playerList.length; i++) {
 
-            if(i==0)
-            createPlayerResultDiv(room.playerList[0], "gold", 1)
-            if(i==1)
-            createPlayerResultDiv(room.playerList[1], "silver", 2)
-            if(i==2)
-            createPlayerResultDiv(room.playerList[2], "copper", 3)
-            if(i>=3)
-            createPlayerResultDiv(room.playerList[i], "other", i+1)
+            if (i == 0)
+                createPlayerResultDiv(room.playerList[0], "gold", 1)
+            if (i == 1)
+                createPlayerResultDiv(room.playerList[1], "silver", 2)
+            if (i == 2)
+                createPlayerResultDiv(room.playerList[2], "copper", 3)
+            if (i >= 3)
+                createPlayerResultDiv(room.playerList[i], "other", i + 1)
 
         }
 
@@ -384,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     socket.on('newNotification', (pseudo, reason) => {
-        switch(reason) {
+        switch (reason) {
             case "JOIN":
                 createNotification(pseudo + " joined !")
                 break;
@@ -405,14 +430,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             div.classList.add('notificationPop')
-        },50)
+        }, 50)
 
         setTimeout(() => {
             div.classList.remove('notificationPop')
             setTimeout(() => {
                 div.remove()
-            },500)
-        },3000)
+            }, 500)
+        }, 3000)
     }
 
     function createClassicPannel(mode, words, player, room) {
@@ -432,16 +457,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function createInputWord(room) {
 
         let cb = document.querySelector('.settingsControls')
-        if(cb) {
+        if (cb) {
             cb.remove()
         }
 
         partieRoundNb.innerHTML = ""
-        _('h1', partieRoundNb, 'PARTIE')
+        //_('h1', partieRoundNb, 'PARTIE')
 
         let controlBox = _('div', gameSettings.querySelector('.gameContentTab'), null, null, "settingsControls")
         let inputNewWord = _('input', controlBox)
-        inputNewWord.placeholder = "Ajouter un mot ..."
+        inputNewWord.placeholder = "Ajouter une catégorie ..."
         let addWordButton = _('button', controlBox, "Ajouter")
         addWordButton.disabled = true
 
@@ -450,7 +475,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputRound.type = 'number'
         inputRound.max = 10
         inputRound.min = 1
-        _('span', partieRoundNb, 'rounds', null, 'spanNbRound')
 
         inputRound.addEventListener('change', () => {
             socket.emit('changeMaxRound', inputRound.value)
@@ -458,21 +482,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inputNewWord.focus()
 
-        inputNewWord.addEventListener("keyup", function(event) {
-            if (event.keyCode === 13 ) {
+        inputNewWord.addEventListener("keyup", function (event) {
+            if (event.keyCode === 13) {
                 addNewWord(inputNewWord.value)
                 inputNewWord.focus()
             }
         });
 
         inputNewWord.addEventListener('keyup', (event) => {
-            if(inputNewWord.value != "") {
+            if (inputNewWord.value != "") {
                 addWordButton.disabled = false;
             } else {
                 addWordButton.disabled = true;
             }
         })
-    
+
         addWordButton.addEventListener('click', () => {
             addNewWord(inputNewWord.value)
         })
@@ -487,11 +511,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let totalPos = 0
         for (let note of notes) {
-            if(note)
-            totalPos++
+            if (note)
+                totalPos++
         }
 
-        if(totalPos < notes.length / 2) {
+        if (totalPos < notes.length / 2) {
             el.classList.add('canceledWord')
         } else {
             el.classList.remove('canceledWord')
@@ -506,16 +530,16 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {*} clear 
      * @param {*} text 
      */
-    function transitionRound(toDismiss, toShow, data, clear = null, text=null) {
+    function transitionRound(toDismiss, toShow, data, clear = null, text = null) {
         let hideDiv = _('div', body, null, null, 'hideDiv')
 
-        if(text)
+        if (text)
             _('div', hideDiv, text, null, 'transitionDiv')
 
         setTimeout(() => {
-            if(clear) 
+            if (clear)
                 resetAllCat()
-            if(data)
+            if (data)
                 createGame(data)
             dismiss(toDismiss)
             show(toShow)
@@ -533,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns bool
      */
     function isActualPlayer(player) {
-        if(player.uuid == sessionStorage.getItem('uuid')) {
+        if (player.uuid == sessionStorage.getItem('uuid')) {
             return true
         }
         return false
@@ -545,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns bool
      */
     function isAdmin(player) {
-        if(player.modo) {
+        if (player.modo) {
             return true
         }
         return false
@@ -563,20 +587,20 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function initLogin() {
         loginInput.addEventListener('keyup', (event) => {
-            if(loginInput.value != "") {
+            if (loginInput.value != "") {
                 createRoom.disabled = false;
-                
-                if (event.keyCode === 13 ) {
-                    socket.emit("createRoom", { pseudo : loginInput.value})
+
+                if (event.keyCode === 13) {
+                    socket.emit("createRoom", { pseudo: loginInput.value })
                 }
 
             } else {
                 createRoom.disabled = true;
             }
         })
-    
+
         createRoom.addEventListener('click', () => {
-            socket.emit("createRoom", { pseudo : loginInput.value})
+            socket.emit("createRoom", { pseudo: loginInput.value })
         })
 
         socket.on('roomCreated', (data) => {
@@ -590,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function initConfiguration() {
         socket.emit('userIsAdmin', admin => {
-            if(admin) {
+            if (admin) {
                 configrationModes.forEach(mode => {
 
                     mode.classList.add('clickable')
@@ -601,21 +625,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     })
                 })
+            } else {
+                socket.emit('getRounds', rounds => {
+                    editRoundSpan(rounds, partieRoundNb)
+                });
             }
+
+            socket.on('getRounds', (rounds) => {
+                editRoundSpan(rounds, partieRoundNb)
+            });
         });
+    }
+
+    function editRoundSpan(rounds, partieRoundNb) {
+        let span = document.querySelector('.spanNbRound')
+        if(span)
+        span.innerHTML = rounds + " rounds"
+        else
+        _('span', partieRoundNb, rounds + " rounds", null, 'spanNbRound')
     }
 
     /**
      * Init waiting room page
      */
     function initWaitingRoom() {
-        for(let title of waitingTitle) {
-            title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
+        for (let title of waitingTitle) {
+            //title.innerHTML = "PARTIE <span class='tonalite'>#</span>" + room
+            title.innerHTML = "PETITBAC.IO"
         }
 
         let path = location.protocol + '//' + location.host
         link.value = path + '/r/' + room
-    
+
         link.addEventListener('click', () => {
             link.select();
             link.setSelectionRange(0, 99999);
@@ -627,12 +668,12 @@ document.addEventListener('DOMContentLoaded', () => {
             clickMe.innerHTML = "COPIÉ !"
             setTimeout(() => {
                 clickMe.innerHTML = save
-            },2000)
+            }, 2000)
         })
 
         ready_button.disabled = false
         ready_button.classList.remove('ready_click')
-    
+
         ready_button.addEventListener('click', () => {
             ready_button.classList.toggle('ready_click')
             socket.emit("switchState", null)
@@ -656,23 +697,28 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function refreshPlayerList(playerList, elem) {
         let localPlayer = JSON.parse(sessionStorage.getItem('player'))
-        
-        for(let nb of waitingNumbers) {
+
+        for (let nb of waitingNumbers) {
             nb.innerHTML = playerList.length + " JOUEUR(S)"
         }
-        for(let player of playerList) {
+        for (let player of playerList) {
+
+            if (player.disconnect) {
+                return
+            }
+
             let playerLi = createPlayerDiv(player, elem)
 
-            if(isAdmin(localPlayer)) {
-                if(!isActualPlayer(player)) {
-                   let kickPlayer = _('div', playerLi, 'KICK', null, 'kickPlayer')
-                   kickPlayer.addEventListener('click', () => {
-                       socket.emit('kickPlayer', player.uuid)
-                   })
+            if (isAdmin(localPlayer)) {
+                if (!isActualPlayer(player)) {
+                    let kickPlayer = _('div', playerLi, 'KICK', null, 'kickPlayer')
+                    kickPlayer.addEventListener('click', () => {
+                        socket.emit('kickPlayer', player.uuid)
+                    })
                 }
             }
 
-            if(!player.ready) {
+            if (!player.ready) {
                 playerLi.classList.add("unready")
             } else {
                 playerLi.classList.remove("unready")
@@ -703,11 +749,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function refreshWordList(wordList, isAdmin = false) {
         words_div.innerHTML = ""
 
-        for(let word of wordList) {
+        for (let word of wordList) {
             let wordContainer = _('div', words_div, null, null, "wordContainer")
             _("div", wordContainer, word, null, "wordPartie")
 
-            if(isAdmin) {
+            if (isAdmin) {
                 wordContainer.classList.add('adminClassRemove')
 
                 wordContainer.addEventListener('click', () => {
@@ -721,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function randomModeMessage() {
         let cb = document.querySelector('.settingsControls')
-        if(cb) {
+        if (cb) {
             cb.remove()
         }
         words_div.innerHTML = ""
@@ -734,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             mode.classList.remove('selectedMode')
 
-            if(mode.getAttribute('value') == modeWord) {
+            if (mode.getAttribute('value') == modeWord) {
                 mode.classList.add('selectedMode')
             }
         });
@@ -759,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputContainer.appendChild(button)
 
         pseudo.addEventListener('keyup', (event) => {
-            if(pseudo.value != "") {
+            if (pseudo.value != "") {
                 button.disabled = false;
             } else {
                 button.disabled = true;
@@ -767,11 +813,11 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         pseudo.addEventListener('keyup', (event) => {
-            if(pseudo.value != "") {
+            if (pseudo.value != "") {
                 button.disabled = false;
-                
-                if (event.keyCode === 13 ) {
-                    socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
+
+                if (event.keyCode === 13) {
+                    socket.emit("newPlayer", { "pseudo": pseudo.value, "room": room })
                 }
 
             } else {
@@ -780,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         button.addEventListener('click', () => {
-            socket.emit("newPlayer", {"pseudo": pseudo.value, "room": room})
+            socket.emit("newPlayer", { "pseudo": pseudo.value, "room": room })
         })
 
         socket.on('removeModal', () => {
@@ -795,29 +841,29 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {*} game 
      */
     function createGame(game) {
-        for(let wr of waitingRound) {
+        for (let wr of waitingRound) {
             wr.innerHTML = "Manche " + game.actualRound + '/' + game.maxRound
         }
 
-        for(let ld of letterDisplay) {
+        for (let ld of letterDisplay) {
             ld.innerHTML = game.actualLetter
         }
 
         generateInput(game.wordList, game.actualLetter)
     }
- 
+
     /**
      * Setup players state 
      * @param {Array[player]} playerList 
      */
     function setupPlayersState(playerList) {
-        for(player of playerList) {
+        for (player of playerList) {
 
-            let contentNR = _('div', playerNextRound, null, null , 'contentNR')
-            let playerDiv = _('div', contentNR, player.pseudo, null , 'playerNR')
-            let stateNR = _('div', contentNR, 'En Attente', null , 'stateNR')
+            let contentNR = _('div', playerNextRound, null, null, 'contentNR')
+            let playerDiv = _('div', contentNR, player.pseudo, null, 'playerNR')
+            let stateNR = _('div', contentNR, 'En Attente', null, 'stateNR')
 
-            if(player.ready) {
+            if (player.ready) {
                 contentNR.classList.add('readyNR')
                 stateNR.innerHTML = "PRÊT"
             } else {
@@ -880,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function generateInput(wordList, actualLetter) {
         var inputList = []
-        for(let word of wordList) {
+        for (let word of wordList) {
             let div = _('div', gameContent, null, null, "answerContent")
             _('h3', div, word)
             let input = _('input', div)
@@ -889,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
             inputList.push(input)
         }
         inputList[0].focus()
-        inputList[0].addEventListener("keyup", function(event) {
+        inputList[0].addEventListener("keyup", function (event) {
             if (event.keyCode === 13) {
                 inputList[1].focus()
             }
@@ -907,15 +953,15 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         // Change input when press enter
-        for(let i = 0; i<inputList.length; i++) {
+        for (let i = 0; i < inputList.length; i++) {
             inputList[i].addEventListener('focus', (event) => {
                 console.log('focus')
-                inputList[i].addEventListener("keyup", function(event) {
-                    if (event.keyCode === 13 ) {
-                        if(i == inputList.length - 1) {
+                inputList[i].addEventListener("keyup", function (event) {
+                    if (event.keyCode === 13) {
+                        if (i == inputList.length - 1) {
                             inputList[0].focus()
                         } else {
-                            inputList[i+1].focus()
+                            inputList[i + 1].focus()
                         }
                     }
                 });
@@ -954,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {New word} value 
      */
     function addNewWord(value) {
-        if(value != "") {
+        if (value != "") {
             socket.emit('addNewWord', value)
             value = ""
         }
@@ -962,14 +1008,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })
 
-function _(tag, parent, text=null,  id=null, classs=null) {
-	let element = document.createElement(tag)
-	if (text)
-		element.appendChild(document.createTextNode(text))
-	parent.appendChild(element)
-	if (id)
-		element.id = id
-	if (classs)
-		element.classList.add(classs)
-	return element
+function _(tag, parent, text = null, id = null, classs = null) {
+    let element = document.createElement(tag)
+    if (text)
+        element.appendChild(document.createTextNode(text))
+    parent.appendChild(element)
+    if (id)
+        element.id = id
+    if (classs)
+        element.classList.add(classs)
+    return element
 }

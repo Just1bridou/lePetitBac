@@ -178,30 +178,30 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 #waitingRoom .body>section {
-    flex:1;
+    flex: 1;
     text-transform: uppercase;
-    height: 100%;
     display: flex;
     flex-direction: column;
+    max-height: 90vh;
+}
+
+.ready_button_container {
+    text-align: center;
 }
 
 #ready_button {
-    position: absolute;
-    width: 40%;
-    left: 25%;
-    transform: translateX(-50%);
-    margin-top: 20px;
-    text-align: center;
     border: none;
     background-color: #F97676;
-    border-radius: 30px;
-    padding: 10px;
     font-size: 30px;
     border-radius: 100px;
     color: white;
     cursor: pointer;
     transition: 0.2s all ease;
-    bottom: 100px;
+    flex: 1;
+    position: relative;
+    width: 60%;
+    margin: 30px;
+    padding: 15px;
 }
 
 #ready_button:hover {
@@ -265,25 +265,23 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 #player_list {
     padding-top: 10px;
     position: relative;
-  /*  margin: 10px;*/
     flex: 1 1 0px;
     display: flex;
     flex-direction: column;
     color: white;
     text-transform: uppercase;
-    left: 50%;
-    transform: translateX(-50%);
     align-items: center;
-   /* border-right: 1px solid rgba(112, 112, 112, 0.86);*/
-  /*  height: 59vh;*/
     overflow-y: scroll;
+    height: auto;
 }
 
 .canvasBackground {
     width: 50%;
     height: 90%;
     position: absolute;
-    background-color: #9751E6;
+    /*background-color: #9751E6;*/
+    background-image: url('/avatar/scene.svg');
+    background-size: cover;
 }
 
 .playerDivContent {
@@ -365,22 +363,25 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 .partie {
     display: flex;
     align-items: center;
-    justify-content: center;
+    /*justify-content: center;*/
 }
 
 .partie input {
-    width: 50px;
-    margin-left: 30px;
+    /* width: 50px; */
+    /* margin-left: 30px; */
     height: 100%;
     font-size: 40px;
     text-align: center;
     border: none;
-    color: #6d9fe6;
-    width: auto;
+    color: #ffffff;
+    border-bottom: 5px solid #60ef87;
+    /* width: auto;*/
+    margin-right: 15px;
 }
 
 .partie span {
     font-size: 30px;
+    color: white;
 }
 
 .borderContainerTab {
@@ -390,7 +391,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 }
 
 .borderContainerTabConf {
-    padding: 20px;
+    padding: 10%;
     background-color: #347DC6;
     flex: 1 1 100%;
 }
@@ -407,10 +408,19 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     z-index: 1;
 }
 
+.gameConfiguration {
+    margin-top: 50px;
+}
+
+.borderContainerTabConf h4 {
+    font-size: 45px;
+    margin-top: 50px;
+    margin-bottom: 10px;
+}
+
 .modeChoiceContent {
     display: flex;
-    justify-content: space-around;
-    margin-top: 50px;
+    /*justify-content: space-between;*/
 }
 
 .modeDiv {
@@ -420,8 +430,9 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     position: relative;
     border-radius: 25px;
     overflow: hidden;
-    border: 15px solid #347DC6;
+    border: 15px solid #383838;
     box-shadow: 7px 12px 6px rgb(0 0 0 / 15%);
+    margin-right: 25px;
 }
 
 .selectedMode {
@@ -516,13 +527,13 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
 .wordContainer {
     display: flex;
     padding: 3px;
-    width: 70%;
+    /*width: 70%;*/
     margin-bottom: 10px;
-    border-radius: 100px;
+    border-radius: 5px;
     height: 30px;
     line-height: 30px;
     padding-left: 20px;
-    transition: all 0.1s ease;
+   /* transition: background 0.05s ease;*/
 }
 
 #wordDiv {
@@ -533,6 +544,7 @@ button/*, .playerDivContent, .copyLink, .settingsControls */{
     overflow-y: scroll;
     position: relative;
     margin-left: 10px;
+    margin-right: 10px;
     flex: auto;
     overflow-y: scroll;
 }

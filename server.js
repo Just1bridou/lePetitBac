@@ -63,6 +63,7 @@ io.on("connect", (socket) => {
             "score": 0,
             "dataSend": false,
             "data": [],
+            "disconnect": false,
         }
 
         roomList.push(
@@ -109,7 +110,7 @@ io.on("connect", (socket) => {
         sockets[uuid] = socket
         
         // Client save UUID in sessionStorage
-        socket.emit("saveUUID", player)
+        socket.emit("savePlayerInformations", player, room)
 
         // Room created
         socket.emit("roomCreated", params)
@@ -120,13 +121,61 @@ io.on("connect", (socket) => {
      */
     socket.on("getData", (data) => {
         let room = getRoom(roomList, socket.room)
-        if(room) {
-            let wordList = room.wordList
-            let listPlayer = room.playerList
-    
+        if(room) {    
             socket.emit("dataSender", room)
-            refreshAllPlayersWordsList(sockets, listPlayer, room)
+            refreshAllPlayersWordsList(sockets, room.playerList, room)
         } else {socket.emit('error', 'serverError')}
+    })
+
+    socket.on("reconnectPlayer", (data) => {
+
+        console.log(data)
+
+        if(data.room == undefined || data.room == 'null')
+            return
+
+        //console.log(data)
+        let room = getRoom(roomList, data.room)
+
+        if(room) {
+            let player = getPlayer(data.uuid, room.room)
+            
+            if(player == undefined) 
+            return
+
+            socket.uuid = data.uuid
+            socket.room = room.room
+            sockets[data.uuid] = socket
+
+            socket.emit("savePlayerInformations", player, room.room)
+            
+            player.disconnect = false
+            switch(room.state) {
+                case "waiting":
+                    console.log("state waiting")
+                    
+                    socket.emit("recoverRefresh", room)
+                    refreshAllPlayersWordsList(sockets, room.playerList, room)
+                    socket.emit("removeModal")
+                    refreshAllPlayersList(sockets, room.playerList)
+                    socket.emit('wordList', room)
+                    notifyPlayers(room.playerList, player.pseudo, "RELOADED")
+                    break;
+                case "game":
+                    console.log("state game")
+
+                    break;
+                case "results":
+                    console.log("state res")
+
+                    break;
+                case "final":
+                    console.log("state fin")
+
+                    break;
+            }
+
+        } // else {socket.emit('error', 'serverError')}
     })
 
     /**
@@ -170,7 +219,7 @@ io.on("connect", (socket) => {
             listPlayer.push(
                 player
             )
-            socket.emit("saveUUID", player)
+            socket.emit("savePlayerInformations", player, room.room)
             socket.emit("removeModal")
 
             refreshAllPlayersList(sockets, listPlayer)
@@ -183,9 +232,22 @@ io.on("connect", (socket) => {
      * Change rounds of the game
      */
     socket.on('changeMaxRound', (newMax) => {
+        console.log("change with " + newMax)
         let room = getRoom(roomList, socket.room)
         if(room) {
             room.maxRound = newMax
+            console.log("emit = " + room.maxRound)
+
+            for(let player of room.playerList) {
+                sockets[player.uuid].emit('getRounds', room.maxRound)
+            }
+        }
+    })
+
+    socket.on("getRounds", (cb) => {
+        let room = getRoom(roomList, socket.room)
+        if(room) {
+            cb(room.maxRound)
         }
     })
 
@@ -279,12 +341,13 @@ io.on("connect", (socket) => {
                 if(listPlayer[i].uuid == socket.uuid) {
                     let index = listPlayer.indexOf(listPlayer[i]);
                     notifyPlayers(listPlayer, listPlayer[i].pseudo, "LEAVE")
-                    if (index > -1) {
-                        listPlayer.splice(index, 1);
-                    }
+                    // if (index > -1) {
+                    //     listPlayer.splice(index, 1);
+                    // }
+                    listPlayer[i].disconnect = true
                     
                     /// Nobody in room
-                    if(listPlayer.length == 0) {
+                    if(allPlayersOffline(listPlayer)) {
                         deleteRoom(room)
                     } else {
                         refreshAllPlayersList(sockets, listPlayer)
@@ -293,6 +356,16 @@ io.on("connect", (socket) => {
             }
         } else {socket.emit('error', 'serverError')}
     })
+
+    function allPlayersOffline(listPlayer) {
+        var offline = true
+        for(let p of listPlayer) {
+            if(p.disconnect == false) {
+                offline = false
+            }
+        }
+        return offline
+    }
 
     /**
      * Check if room exist
@@ -648,12 +721,15 @@ function getIndex(uuid, code) {
  */
 function getPlayer(uuid, code) {
     let room = getRoom(roomList, code)
-    let playerList = room.playerList
-    for(let i = 0; i<playerList.length; i++) {
-        if(playerList[i].uuid == uuid) {
-            return playerList[i]
+    if(room) {
+        let playerList = room.playerList
+        for(let i = 0; i<playerList.length; i++) {
+            if(playerList[i].uuid == uuid) {
+                return playerList[i]
+            }
         }
     }
+    return null
 }
 
 /**

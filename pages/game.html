@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="/css/style.css" rel="stylesheet">
     <link href="/css/stylePhone.css" rel="stylesheet">
+    <link rel="shortcut icon" href="/images/favicon-32x32.png" />
     <title>Petit bac</title>
 </head>
 <body>
@@ -62,7 +63,9 @@
         <section class="playerDiv">
             <canvas class="canvasBackground" height="1280" width="1080"></canvas>
             <div id="player_list"></div>
-            <button id="ready_button">Pret</button>
+            <div class="ready_button_container">
+                <button id="ready_button">Pret</button>
+            </div>
         </section>
         <section id="gameSettings">
 
@@ -80,21 +83,25 @@
             <section class="borderContainerTabConf none">
                 <section class="gameContentTab">
 
-                    <section class="modeChoiceContent">
-
-                        <div class="modeDiv classicMode selectedMode" value="CLASSIC">
-                            <img src="/images/crayon2.png">
-                            <div class="modeTitle">CLASSIQUE</div>
-                        </div>
-
-                        <div class="modeDiv randomMode" value="RANDOM">
-                            <div class="modeContent">?</div>
-                            <div class="modeTitle">ALÉATOIRE</div>
-                        </div>
-
-                    </section>
+                    <div>
+                        <h4>Mode :</h4>
+                        <section class="modeChoiceContent">
+                            
+                            <div class="modeDiv classicMode selectedMode" value="CLASSIC">
+                                <img src="/images/crayon2.png">
+                                <div class="modeTitle">CLASSIQUE</div>
+                            </div>
+                            
+                            <div class="modeDiv randomMode" value="RANDOM">
+                                <div class="modeContent">?</div>
+                                <div class="modeTitle">ALÉATOIRE</div>
+                            </div>
+                            
+                        </section>
+                    </div>
         
                     <section class="gameConfiguration">
+                        <h4>Rounds :</h4>
                         <div class="partie"></div>
                     </section>
 
