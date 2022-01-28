@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io()
 
-    const TIME_BEFORE_STARTING = 6
+    const TIME_BEFORE_STARTING = 1
 
     var body = document.querySelector('body')
 
@@ -242,7 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < inputs.length; i++) {
             let notes = []
-            for (let player in data.playersList) {
+            for (let player of data.playersList) {
+
+                if(player.disconnect) {
+                    break
+                }
+
                 if (inputs[i].value == "") {
                     notes.push(0)
                 } else {
@@ -254,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 "notes": notes,
                 "pos": i
             }
+
             res.push(current)
         }
         socket.emit('resultStop', res)
@@ -287,6 +293,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let player of playersList) {
 
+                if(player.disconnect) {
+                    break
+                }
+
                 let input = player.data[i]
                 let inputNotes = input.notes
 
@@ -318,7 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let resultsContent = _("div", tr, null, null, 'resultsContent')
                 for (let i = 0; i < inputNotes.length; i++) {
-                    let r = _("div", resultsContent, null, null, 'resCase')
+                    let r = _("div", resultsContent, player.pseudo, null, 'resCase')
+
                     if (inputNotes[i]) {
                         r.classList.remove('falseCase')
                     } else {
@@ -398,17 +409,23 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit('replayGame', null)
         })
 
-        for (let i = 0; i < room.playersList.length; i++) {
+        let posScore = 0;
+        for(let player of room.playersList) {
 
-            if (i == 0)
-                createPlayerResultDiv(room.playersList[0], "gold", 1)
-            if (i == 1)
-                createPlayerResultDiv(room.playersList[1], "silver", 2)
-            if (i == 2)
-                createPlayerResultDiv(room.playersList[2], "copper", 3)
-            if (i >= 3)
-                createPlayerResultDiv(room.playersList[i], "other", i + 1)
+            if(player.disconnect) {
+                break;
+            }
 
+            if (posScore == 0)
+                createPlayerResultDiv(player, "gold", 1)
+            if (posScore == 1)
+                createPlayerResultDiv(player, "silver", 2)
+            if (posScore == 2)
+                createPlayerResultDiv(player, "copper", 3)
+            if (posScore >= 3)
+                createPlayerResultDiv(player, "other", posScore + 1)
+
+            posScore ++
         }
 
         transitionRound(resultSection, scoreSection, null, null, 'RESULTS')
@@ -617,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createRoom.addEventListener('click', () => {
             socket.emit("createRoom", { pseudo: loginInput.value })
+            createRoom.disabled = true;
         })
 
         socket.on('roomCreated', (data) => {
@@ -691,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ready_button.classList.remove('ready_click')
 
         ready_button.addEventListener('click', () => {
-            console.log("click")
             ready_button.classList.toggle('ready_click')
             socket.emit("switchState", null)
         })
@@ -729,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let player of playersList) {
 
             if (player.disconnect) {
-                return
+                break
             }
 
             let playerLi = createPlayerDiv(player, elem)
@@ -899,7 +916,11 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {Array[player]} playersList 
      */
     function setupPlayersState(playersList) {
-        for (player of playersList) {
+        for (let player of playersList) {
+
+            if(player.disconnect) {
+                break
+            }
 
             let contentNR = _('div', playerNextRound, null, null, 'contentNR')
             let playerDiv = _('div', contentNR, player.pseudo, null, 'playerNR')

@@ -229,7 +229,7 @@ io.on("connect", (socket) => {
                     refreshAllPlayersList(sockets, playersList)
                 }
 
-                if(!playersList[i].ready)
+                if(!playersList[i].disconnect && !playersList[i].ready)
                     allReady = false
             }
             if(allReady) {
@@ -258,7 +258,7 @@ io.on("connect", (socket) => {
                     }
                 }
 
-                if(!playersList[i].ready)
+                if(!playersList[i].disconnect && !playersList[i].ready)
                     allReady = false
             }
             if(allReady) {
@@ -283,7 +283,7 @@ io.on("connect", (socket) => {
                     playersList[i].data = results
                 }
 
-                if(!playersList[i].dataSend)
+                if(!playersList[i].disconnect && !playersList[i].dataSend)
                 allSend = false
             }
             if(allSend) {
