@@ -716,7 +716,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let localPlayer = JSON.parse(sessionStorage.getItem('player'))
 
         for (let nb of waitingNumbers) {
-            nb.innerHTML = playersList.length + " JOUEUR(S)"
+            let count = 0
+
+            for(let player of playersList) {
+                if(!player.disconnect) {
+                    count ++
+                }
+            }
+
+            nb.innerHTML = count + " JOUEUR(S)"
         }
         for (let player of playersList) {
 
