@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let resultsContent = _("div", tr, null, null, 'resultsContent')
                 for (let i = 0; i < inputNotes.length; i++) {
-                    let r = _("div", resultsContent, player.pseudo, null, 'resCase')
+                    let r = _("div", resultsContent, null, null, 'resCase')
 
                     if (inputNotes[i]) {
                         r.classList.remove('falseCase')
