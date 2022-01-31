@@ -11,8 +11,8 @@ https://petitbac.io
 
 ### Doc : 
 
-[RoomManager.js](docs/RoomManager.md)
+[RoomManager.js](doc/RoomManager.md)
 
-[Room.js](docs/Room.md)
+[Room.js](doc/Room.md)
 
-[Player.js](docs/Player.md)
+[Player.js](doc/Player.md)
