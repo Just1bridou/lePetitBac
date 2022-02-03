@@ -1,0 +1,165 @@
+#resultContent {
+    position: relative;
+    width: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 50px;
+}
+
+.tableResults {
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid #cecece;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+.tableResults>div {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.tableResults>div>div {
+    flex: 1 1 0;
+    font-size: 20px;
+}
+
+.resultsContent {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.lineContent {
+    padding: 6px;
+    border-radius: 10px;
+    transition: 0.1s all ease;
+}
+
+.lineContent:hover {
+    background-color: #e8e8e8;
+}
+
+.resCase {
+    height: 25px;
+    width: 25px;
+    border: 2xp solid black;
+    background-color: #5EEC87;
+    margin: 2px;
+    border-radius: 8px;
+    transition: 0.1s all ease;
+}
+
+.falseCase {
+    background-color: #F97676 !important;
+}
+
+.canceledWord {
+    text-decoration: line-through red 3px;
+}
+
+.noClick {
+    cursor: initial !important;
+}
+
+.userCase {
+    height: 25px;
+    width: 25px;
+    border: 2xp solid black;
+    background-color: #5EEC87;
+    margin: 2px;
+    border-radius: 8px;
+    transition: 0.1s all ease;
+}
+
+.userCase {
+    cursor: pointer;
+}
+
+.wordResults {
+    margin-top: 50px;
+    text-transform: uppercase;
+}
+
+.wordResults h2 {
+    color: #343434;
+    font-size: 40px;
+}
+
+.tableInfos {
+    display: flex;
+    color: #c1c1c1;
+}
+
+.infoNotes {
+    text-align: right;
+}
+
+.tableInfos>div {
+    flex: 1 1 0;
+}
+
+#playerNextRound {
+    margin-bottom: 150px;
+}
+
+.recapPlayer {
+    width: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid #F97676;
+    border-radius: 20px;
+}
+
+.recapPlayer h3 {
+    color: #343434;
+    font-size: 30px;
+}
+
+.recapTitle {
+    width: 80%;
+    left: 50%;
+    text-align: left;
+    transform: translateX(-50%);
+    color: #343434;
+    font-size: 40px;
+    margin-top: 50px;
+    border-bottom: 2px solid #cecece;
+    padding-bottom: 10px;
+}
+
+.statusReady {
+    color: #F97676;
+    font-size: 30px;
+}
+
+.readyNR .statusReady {
+    color: #5EEC87 !important;
+}
+
+.readyNR {
+    border-color: #5EEC87 !important;
+}
+
+.nextRoundButton {
+    margin: 50px;
+    width: 40%;
+    position: relative;
+    /* left: 50%;
+    transform: translateX(-50%); */
+    font-size: 30px;
+    border: 5px solid #F97676;
+    background-color: #F97676;
+    border-radius: 30px;
+    padding: 10px;
+    border-radius: 100px;
+    color: white;
+    cursor: pointer;
+    transition: 0.1s all ease;
+}
+
+
+/* .clickedNR {
+    border-color: #5EEC87;
+    background-color: #5EEC87;
+} */

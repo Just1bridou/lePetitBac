@@ -7,13 +7,13 @@ class RoomManager {
     }
 
     /**
-    * Get room from code
-    * @param {RoomCode} code 
-    * @returns room
-    */
+     * Get room from code
+     * @param {RoomCode} code 
+     * @returns room
+     */
     getRoom(code) {
-        for(let room of this.rooms) {
-            if(room.code == code) {
+        for (let room of this.rooms) {
+            if (room.code == code) {
                 return room
             }
         }
@@ -33,8 +33,8 @@ class RoomManager {
      * Remove room from roomsList
      */
     deleteRoom(room) {
-        for (var i = 0; i < this.rooms.length; i++){
-            if(this.rooms[i].code == room.code) {
+        for (var i = 0; i < this.rooms.length; i++) {
+            if (this.rooms[i].code == room.code) {
                 let index = this.rooms.indexOf(this.rooms[i]);
                 if (index > -1) {
                     this.rooms.splice(index, 1);
@@ -51,10 +51,10 @@ class RoomManager {
      */
     roomExist(code, success, error = null) {
         let room = this.getRoom(code)
-        if(room) {
+        if (room) {
             success(room)
         } else {
-            if(error)
+            if (error)
                 error()
         }
     }

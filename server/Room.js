@@ -17,7 +17,7 @@ class Room {
     constructor() {
         this.code = this.generateRoomToken();
         this.playersList = [];
-        this.wordsList = BASIC_WORDS;
+        this.wordsList = Array.from(BASIC_WORDS);
         this.actualLetter = "";
         this.historyLetter = [];
         this.actualRound = 1;
@@ -85,12 +85,12 @@ class Room {
      * @param {Callback} cb 
      */
     sendToAll(sockets, action, params, cb = null) {
-        for (var i = 0; i < this.playersList.length; i++){
+        for (var i = 0; i < this.playersList.length; i++) {
             let uuid = this.playersList[i].uuid
             sockets[uuid].emit(action, params)
         }
 
-        if(cb) {
+        if (cb) {
             cb(true)
         }
     }
@@ -102,15 +102,15 @@ class Room {
      * @param {{}} params 
      * @param {Callback} cb 
      */
-     sendToAdmins(sockets, action, params, cb = null) {
-        for (var i = 0; i < this.playersList.length; i++){
+    sendToAdmins(sockets, action, params, cb = null) {
+        for (var i = 0; i < this.playersList.length; i++) {
             let uuid = this.playersList[i].uuid
-            if(this.playersList[i].admin) {
+            if (this.playersList[i].admin) {
                 sockets[uuid].emit(action, params)
             }
         }
 
-        if(cb) {
+        if (cb) {
             cb(true)
         }
     }
@@ -122,15 +122,15 @@ class Room {
      * @param {{}} params 
      * @param {Callback} cb 
      */
-     sendToAllOnline(sockets, action, params, cb = null) {
-        for (var i = 0; i < this.playersList.length; i++){
+    sendToAllOnline(sockets, action, params, cb = null) {
+        for (var i = 0; i < this.playersList.length; i++) {
             let uuid = this.playersList[i].uuid
-            if(!this.playersList[i].disconnect) {
+            if (!this.playersList[i].disconnect) {
                 sockets[uuid].emit(action, params)
             }
         }
 
-        if(cb) {
+        if (cb) {
             cb(true)
         }
     }
@@ -140,13 +140,13 @@ class Room {
      * @param {Player[]} playersList 
      */
     resetPlayerState() {
-        for(let player of this.playersList) {
+        for (let player of this.playersList) {
             player.ready = false
             player.dataSend = false
         }
     }
 
-    
+
     /**
      * Get player in room with UUID
      * @param {UUID} uuid 
@@ -154,8 +154,8 @@ class Room {
      * @returns player
      */
     getPlayer(uuid) {
-        for(let player of this.playersList) {
-            if(player.uuid == uuid) {
+        for (let player of this.playersList) {
+            if (player.uuid == uuid) {
                 return player
             }
         }
@@ -169,8 +169,8 @@ class Room {
      * @param {string} cb 
      */
     kickPlayer(sockets, uuid) {
-        for (var i = 0; i < this.playersList.length; i++){
-            if(this.playersList[i].uuid == uuid) {
+        for (var i = 0; i < this.playersList.length; i++) {
+            if (this.playersList[i].uuid == uuid) {
                 let index = this.playersList.indexOf(this.playersList[i]);
 
                 this.notifyPlayers(sockets, this.playersList[i].pseudo, "KICK")
@@ -204,10 +204,11 @@ class Room {
      * @param {int} newMax 
      */
     updateMaxRound(sockets, newMax) {
-        if(newMax > 25) {
+        if (newMax > 25) {
             newMax = 25
         }
         this.maxRound = newMax
+
         this.sendToAll(sockets, "getRounds", this.maxRound)
     }
 
@@ -219,18 +220,18 @@ class Room {
     switchState(sockets, uuid) {
         var allReady = true
 
-        for(let player of this.playersList) {
-            if(player.uuid == uuid) {
+        for (let player of this.playersList) {
+            if (player.uuid == uuid) {
                 player.ready = !player.ready
                 this.refreshPlayersList(sockets)
             }
 
-            if(!player.disconnect && !player.ready) {
+            if (!player.disconnect && !player.ready) {
                 allReady = false
             }
         }
-        
-        if(allReady) {
+
+        if (allReady) {
             this.startGame(sockets)
         }
     }
@@ -243,20 +244,20 @@ class Room {
     playerReady(sockets, uuid) {
         var allReady = true
 
-        for(let player of this.playersList) {
-            if(player.uuid == uuid) {
-                if(!player.ready) {
+        for (let player of this.playersList) {
+            if (player.uuid == uuid) {
+                if (!player.ready) {
                     player.ready = true
                     this.refreshPlayersListNextRound(sockets)
                 }
             }
 
-            if(!player.disconnect && !player.ready) {
+            if (!player.disconnect && !player.ready) {
                 allReady = false
             }
         }
 
-        if(allReady) {
+        if (allReady) {
             this.allPlayersReadyNextRound(sockets)
         }
     }
@@ -274,7 +275,7 @@ class Room {
      * Compute the score for each player of the round
      */
     reworkScorePlayer() {
-        for(let player of this.playersList) {
+        for (let player of this.playersList) {
             player.updateScore(this)
         }
     }
@@ -284,6 +285,7 @@ class Room {
      * @param {socket[]} sockets 
      */
     nextRound(sockets) {
+        this.state = "game"
         this.generateLetter()
         this.sendToAll(sockets, "nextRound", this)
         this.resetPlayerState()
@@ -304,7 +306,7 @@ class Room {
     allPlayersReadyNextRound(sockets) {
         this.updateNextRound()
         this.reworkScorePlayer()
-        if(this.actualRound <= this.maxRound) {
+        if (this.actualRound <= this.maxRound) {
             this.nextRound(sockets)
         } else {
             this.finishGame(sockets)
@@ -326,9 +328,8 @@ class Room {
      * @param {Player[]} playersList 
      * @param {ROom} room 
      */
-    refreshPlayersWordsList(sockets, playersList, room) {
-        this.sendToAll(sockets, "wordsList", this)
-        this.sendToAdmins(sockets, "gameSettings", this)
+    refreshPlayersWordsList(sockets) {
+        this.sendToAll(sockets, 'refreshWordsList', this.wordsList)
     }
 
     /**
@@ -364,12 +365,12 @@ class Room {
      * @param {words[]} words 
      */
     changeGameMode(sockets, mode) {
-        if(ROOM_MODE.includes(mode)) {
+        if (ROOM_MODE.includes(mode)) {
             this.mode = mode
-        
-            for (var i = 0; i < this.playersList.length; i++){
+
+            for (var i = 0; i < this.playersList.length; i++) {
                 let uuid = this.playersList[i].uuid
-                sockets[uuid].emit('changeGameMode', this.mode, this.words, this.playersList[i], this)
+                sockets[uuid].emit('changeGameMode', { mode: this.mode, words: this.wordsList, player: this.playersList[i], room: this })
             }
         }
     }
@@ -378,13 +379,13 @@ class Room {
      * Generate words list
      */
     generateWordsList() {
-        switch (this.mode){
+        switch (this.mode) {
             case "RANDOM":
                 this.wordsList = this.getRandomCategories(6)
                 break;
         }
     }
-    
+
     /**
      * Get random categories
      * @returns string[]
@@ -394,8 +395,8 @@ class Room {
         let categoriesRaw = fs.readFileSync('categories.json');
         let categories = JSON.parse(categoriesRaw);
         categories = categories.categories
-    
-        while(newWords.length != 6) {
+
+        while (newWords.length != 6) {
             let i = this.getRndInteger(0, categories.length)
             newWords.push(categories[i])
             categories.splice(i, 1)
@@ -410,7 +411,7 @@ class Room {
      */
     addWordToWordsList(sockets, word) {
         this.wordsList.push(word)
-        room.refreshPlayersWordsList(sockets)
+        this.refreshPlayersWordsList(sockets)
     }
 
     /**
@@ -422,7 +423,7 @@ class Room {
         this.wordsList.splice(this.wordsList.indexOf(word), 1);
         this.refreshPlayersWordsList(sockets)
     }
-    
+
     /**
      * Update players result
      * @param {UUID} uuid 
@@ -431,18 +432,18 @@ class Room {
     resultStop(sockets, uuid, results) {
         var allSend = true
 
-        for(let player of this.playersList) {
-            if(player.uuid == uuid) {
+        for (let player of this.playersList) {
+            if (player.uuid == uuid) {
                 player.dataSend = true
                 player.data = results
             }
 
-            if(!player.disconnect && !player.dataSend) {
+            if (!player.disconnect && !player.dataSend) {
                 allSend = false
             }
         }
 
-        if(allSend) {
+        if (allSend) {
             this.displayResultsAll(sockets)
         }
     }
@@ -462,12 +463,11 @@ class Room {
      * @param {string} reason 
      */
     notifyPlayers(sockets, pseudo, reason, cb = null) {
-        for (var i = 0; i < this.playersList.length; i++){
-            let uuid = this.playersList[i].uuid
-            sockets[uuid].emit('newNotification', pseudo, reason)
+        for (let player of this.playersList) {
+            sockets[player.uuid].emit('newNotification', { pseudo: pseudo, reason: reason })
         }
 
-        if(cb) {
+        if (cb) {
             cb()
         }
     }
@@ -479,12 +479,12 @@ class Room {
      * @param {Callback} cb 
      */
     playerLeave(sockets, uuid, cb) {
-        for(let player of this.playersList) {
-            if(player.uuid == uuid) {
+        for (let player of this.playersList) {
+            if (player.uuid == uuid) {
                 player.disconnect = true
 
                 this.notifyPlayers(sockets, player.pseudo, "LEAVE", cb)
-            } 
+            }
         }
     }
 
@@ -494,8 +494,8 @@ class Room {
      */
     allPlayersOffline() {
         var offline = true
-        for(let player of this.playersList) {
-            if(player.disconnect == false) {
+        for (let player of this.playersList) {
+            if (player.disconnect == false) {
                 offline = false
                 return offline
             }
@@ -521,7 +521,7 @@ class Room {
         this.actualRound = 1
         this.state = "waiting"
 
-        for(let player of this.playersList) {
+        for (let player of this.playersList) {
             player.score = 0
             player.data = []
             player.ready = false
@@ -535,8 +535,8 @@ class Room {
      * @returns index of player in room's playersList
      */
     getIndex(uuid) {
-        for(let i = 0; i < this.playersList.length; i++) {
-            if(this.playersList[i].uuid == uuid) {
+        for (let i = 0; i < this.playersList.length; i++) {
+            if (this.playersList[i].uuid == uuid) {
                 return i
             }
         }
@@ -549,8 +549,8 @@ class Room {
      * @returns rdm(int)
      */
     getRndInteger(min, max) {
-        return Math.floor(Math.random() * (max - min) ) + min;
+        return Math.floor(Math.random() * (max - min)) + min;
     }
-}  
+}
 
 module.exports = Room;

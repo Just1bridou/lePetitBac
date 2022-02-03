@@ -10,11 +10,11 @@ let app = express()
 let server = http.Server(app)
 let io = socketio(server)
 
-app.use("/css", express.static( __dirname + "/css"))
-app.use("/js", express.static( __dirname + "/js"))
-app.use("/pages", express.static( __dirname + "/pages"))
-app.use("/images", express.static( __dirname + "/images/"))
-app.use("/avatar", express.static( __dirname + "/avatars/"))
+app.use("/css", express.static(__dirname + "/css"))
+app.use("/js", express.static(__dirname + "/js"))
+app.use("/pages", express.static(__dirname + "/pages"))
+app.use("/images", express.static(__dirname + "/images/"))
+app.use("/avatar", express.static(__dirname + "/avatars/"))
 
 const RoomManagerClass = require('./server/RoomManager')
 const Player = require("./server/Player")
@@ -24,7 +24,7 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/pages/game.html")
 })
 
-app.get('/r/:code', function (req, res) {
+app.get('/r/:code', function(req, res) {
     res.sendFile(__dirname + "/pages/game.html")
 });
 
@@ -42,6 +42,17 @@ app.get("/json", (req, res) => {
 io.on("connect", (socket) => {
 
     /**
+     * Init login / join page
+     */
+    socket.on("browserConnection", (code) => {
+        RoomManager.roomExist(code, (room) => {
+            socket.emit('showSection', 'join')
+        }, () => {
+            socket.emit('showSection', 'login')
+        })
+    })
+
+    /**
      * Player wants to created new room
      */
     socket.on("createRoom", (data) => {
@@ -51,71 +62,146 @@ io.on("connect", (socket) => {
 
         room.addPlayer(player)
         RoomManager.addRoom(room)
-        
+
         socket.uuid = player.uuid
         socket.code = room.code
         sockets[player.uuid] = socket
-        
-        // Client save UUID in sessionStorage
+
+        /**
+         * Send player information to localStorage's client
+         */
         socket.emit("savePlayerInformations", player, room.code)
 
-        // Room created
-        socket.emit("roomCreated", {"code": room.code, "uuidPlayer": player.uuid})
+        /**
+         * Switch to waiting room screen
+         */
+        socket.emit("transitionSection", {
+            from: "login",
+            to: "waitingRoom",
+            text: "Joined !"
+        })
+
+        /**
+         * Refresh words list
+         */
+        room.refreshPlayersWordsList(sockets)
+
+        /**
+         * Send to admins configuration pannel
+         */
+        room.sendToAdmins(sockets, "adminSettings", room)
+
+        /**
+         * Refresh players list
+         */
+        room.refreshPlayersList(sockets)
     })
 
     /**
      * Send game's data to client
      */
-    socket.on("getData", (data) => {
-        RoomManager.roomExist(socket.code, (room) => {
-            socket.emit("dataSender", room)
+    // socket.on("getData", (data) => {
+    //     RoomManager.roomExist(socket.code, (room) => {
+    //         socket.emit("dataSender", room)
+    //         room.refreshPlayersWordsList(sockets)
+    //     }, () => {
+    //         socket.emit('error', 'serverError')
+    //     })
+    // })
+
+    /**
+     * Add new player to room
+     */
+    socket.on("newPlayer", (params) => {
+
+        RoomManager.roomExist(params.code, (room) => {
+            let player = new Player(params.pseudo)
+            room.addPlayer(player)
+
+            socket.code = params.code
+            socket.uuid = player.uuid
+            sockets[player.uuid] = socket
+
+            socket.emit("savePlayerInformations", player, room.code)
+
+            socket.emit("transitionSection", {
+                from: "join",
+                to: "waitingRoom",
+                text: "Joined !"
+            })
+
             room.refreshPlayersWordsList(sockets)
+
+            if (player.admin) { socket.emit('adminSettings', room) }
+
+            room.refreshPlayersList(sockets)
+
+            room.notifyPlayers(sockets, player.pseudo, "JOIN")
+
         }, () => {
             socket.emit('error', 'serverError')
         })
     })
 
-    socket.on("reconnectPlayer", (data) => {
+    socket.on("reconnectPlayer", data => {
 
-        if(data.code == undefined || data.code == 'null')
+        console.log(data)
+
+        if (data.code == undefined || data.code == 'null') {
+            socket.emit("browserConnection", null)
             return
+        }
 
-        RoomManager.roomExist(socket.code, (room) => {
+        RoomManager.roomExist(data.code, (room) => {
+
             let player = room.getPlayer(data.uuid)
-            
-            if(player == undefined) 
-            return
+
+            if (player == undefined || player == null) {
+                socket.emit("browserConnection", null)
+                return
+            }
 
             socket.uuid = data.uuid
             socket.code = room.code
             sockets[data.uuid] = socket
 
             socket.emit("savePlayerInformations", player, room.code)
-            
+
             player.disconnect = false
-            switch(room.state) {
+
+            console.log(room.state)
+            switch (room.state) {
                 case "waiting":
-                    socket.emit("recoverRefresh", room)
+
+                    socket.emit("savePlayerInformations", player, room.code)
+
+                    socket.emit("showSection", "waitingRoom")
+
                     room.refreshPlayersWordsList(sockets)
-                    socket.emit("removeModal")
-                    socket.emit("initWaitingRoom")
+
+                    if (player.admin) { socket.emit('adminSettings', room) }
+
                     room.refreshPlayersList(sockets)
-                    socket.emit('wordsList', room)
                     room.notifyPlayers(sockets, player.pseudo, "RELOADED")
                     break;
+
                 case "game":
-                    socket.emit("removeModal")
-                    socket.emit('recoverGamePage', room)
+                    socket.emit("savePlayerInformations", player, room.code)
+                    socket.emit("recoverInGame", room)
                     room.notifyPlayers(sockets, player.pseudo, "RELOADED")
                     break;
+
                 case "results":
-                    socket.emit("removeModal")
-                    socket.emit('displayResults', room)
+                    socket.emit("savePlayerInformations", player, room.code)
+                    socket.emit("recoverResults", room)
                     room.notifyPlayers(sockets, player.pseudo, "RELOADED")
                     break;
+
                 case "final":
                     break;
             }
+        }, () => {
+            socket.emit("browserConnection", null)
         })
     })
 
@@ -125,34 +211,7 @@ io.on("connect", (socket) => {
     socket.on("replayRefresh", (data) => {
         RoomManager.roomExist(socket.code, (room) => {
             room.refreshPlayersList(sockets)
-            room.refreshPlayersWordsList(sockets)
-        }, () => {
-            socket.emit('error', 'serverError')
-        })
-    })
-
-    /**
-     * Add new player to room
-     */
-    socket.on("newPlayer", (params) => {
-        RoomManager.roomExist(params.code, (room) => {
-            let player = new Player(params.pseudo)
-
-            room.addPlayer(player)
-
-            socket.code = params.code
-            socket.uuid = player.uuid
-            sockets[player.uuid] = socket
-
-            socket.emit("savePlayerInformations", player, room.code)
-            socket.emit("removeModal")
-            socket.emit("initWaitingRoom")
-
-            room.refreshPlayersList(sockets)
-
-            socket.emit('wordsList', room)
-
-            room.notifyPlayers(sockets, player.pseudo, "JOIN")
+                //room.refreshPlayersWordsList(sockets)
         }, () => {
             socket.emit('error', 'serverError')
         })
@@ -168,7 +227,9 @@ io.on("connect", (socket) => {
     })
 
     socket.on("getRounds", (cb) => {
+        console.log("getrounds")
         RoomManager.roomExist(socket.code, (room) => {
+            console.log("cb")
             cb(room.maxRound)
         })
     })
@@ -200,7 +261,7 @@ io.on("connect", (socket) => {
      */
     socket.on("resultStop", (results) => {
         RoomManager.roomExist(socket.code, (room) => {
-            room.resultStop(sockets, socket.uuid, results)            
+            room.resultStop(sockets, socket.uuid, results)
         }, () => {
             socket.emit('error', 'serverError')
         })
@@ -212,7 +273,7 @@ io.on("connect", (socket) => {
     socket.on("disconnect", (data) => {
         RoomManager.roomExist(socket.code, (room) => {
             room.playerLeave(sockets, socket.uuid, () => {
-                if(room.allPlayersOffline()) {
+                if (room.allPlayersOffline()) {
                     RoomManager.deleteRoom(room)
                 } else {
                     room.refreshPlayersList(sockets)
@@ -291,7 +352,7 @@ io.on("connect", (socket) => {
             socket.emit('error', 'serverError')
         })
     })
-    
+
     /**
      * Kick player from room
      */
@@ -309,14 +370,14 @@ io.on("connect", (socket) => {
     socket.on('userIsReady', (cb) => {
         RoomManager.roomExist(socket.code, (room) => {
             let player = room.getPlayer(socket.uuid)
-            cb(player.ready); 
+            cb(player.ready);
         })
     });
 
     socket.on('userIsAdmin', (cb) => {
         RoomManager.roomExist(socket.code, (room) => {
             let player = room.getPlayer(socket.uuid)
-            cb(player.admin); 
+            cb(player.admin);
         })
     });
 
@@ -324,6 +385,17 @@ io.on("connect", (socket) => {
      * Change room's mode (RANDOM/CLASIC)
      */
     socket.on("changeMode", (mode) => {
+        RoomManager.roomExist(socket.code, (room) => {
+            room.changeGameMode(sockets, mode)
+        }, () => {
+            socket.emit('error', 'serverError')
+        })
+    })
+
+    /**
+     * Change room's mode (RANDOM/CLASIC)
+     */
+    socket.on("updateGameMode", (mode) => {
         RoomManager.roomExist(socket.code, (room) => {
             room.changeGameMode(sockets, mode)
         }, () => {

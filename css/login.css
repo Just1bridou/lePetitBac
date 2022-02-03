@@ -1,0 +1,8 @@
+.loginButtonContent {
+    text-align: center;
+}
+
+input#login_pseudo {
+    margin-top: 30px;
+    text-indent: 30px;
+}
