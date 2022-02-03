@@ -39,6 +39,8 @@ class SectionResults {
      * @param {Room} room 
      */
     displayResults(room) {
+        console.log(room)
+
         this.refreshHeader(room)
 
         var resultContent = this.sectionObj.select('#resultContent')
@@ -86,11 +88,16 @@ class SectionResults {
             info.appendChild(reponseChoice)
             info.appendChild(notes)
 
+            console.log("playerlist :")
+            console.log(room.playersList)
+
             for (let player of room.playersList) {
 
                 if (player.disconnect) {
                     break
                 }
+
+                console.log("create input for : " + player.pseudo)
 
                 let input = player.data[i]
                 let inputNotes = input.notes

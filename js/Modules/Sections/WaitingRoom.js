@@ -431,6 +431,9 @@ class SectionWR {
      */
     refreshPlayerList(playersList) {
 
+        console.log("waitingroom")
+        console.log(playersList)
+
         let waitingPlayerList = this.sectionObj.select('#player_list')
         let countPlayer = this.sectionObj.select('.waiting_numbers')
         let localPlayer = JSON.parse(sessionStorage.getItem('player'))
@@ -445,6 +448,8 @@ class SectionWR {
 
         for (let player of playersList) {
             if (player.disconnect) { break }
+
+            console.log("create div for : " + player.pseudo)
 
             let playerLi = this.createPlayerDiv(player)
             waitingPlayerList.appendChild(playerLi)
