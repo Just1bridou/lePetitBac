@@ -47,20 +47,19 @@ class SectionScore {
         let posScore = 0;
         for (let player of room.playersList) {
 
-            if (player.disconnect) {
-                break;
+            if (!player.disconnect) {
+
+                if (posScore == 0)
+                    this.createPlayerResultDiv(player, "gold", 1)
+                if (posScore == 1)
+                    this.createPlayerResultDiv(player, "silver", 2)
+                if (posScore == 2)
+                    this.createPlayerResultDiv(player, "copper", 3)
+                if (posScore >= 3)
+                    this.createPlayerResultDiv(player, "other", posScore + 1)
+
+                posScore++
             }
-
-            if (posScore == 0)
-                this.createPlayerResultDiv(player, "gold", 1)
-            if (posScore == 1)
-                this.createPlayerResultDiv(player, "silver", 2)
-            if (posScore == 2)
-                this.createPlayerResultDiv(player, "copper", 3)
-            if (posScore >= 3)
-                this.createPlayerResultDiv(player, "other", posScore + 1)
-
-            posScore++
         }
     }
 

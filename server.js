@@ -98,18 +98,6 @@ io.on("connect", (socket) => {
     })
 
     /**
-     * Send game's data to client
-     */
-    // socket.on("getData", (data) => {
-    //     RoomManager.roomExist(socket.code, (room) => {
-    //         socket.emit("dataSender", room)
-    //         room.refreshPlayersWordsList(sockets)
-    //     }, () => {
-    //         socket.emit('error', 'serverError')
-    //     })
-    // })
-
-    /**
      * Add new player to room
      */
     socket.on("newPlayer", (params) => {
@@ -122,21 +110,37 @@ io.on("connect", (socket) => {
             socket.uuid = player.uuid
             sockets[player.uuid] = socket
 
-            socket.emit("savePlayerInformations", player, room.code)
+            switch (room.state) {
+                case "waiting":
 
-            socket.emit("transitionSection", {
-                from: "join",
-                to: "waitingRoom",
-                text: "Joined !"
-            })
+                    socket.emit("savePlayerInformations", player, room.code)
 
-            room.refreshPlayersWordsList(sockets)
+                    socket.emit("transitionSection", {
+                        from: "join",
+                        to: "waitingRoom",
+                        text: "Joined !"
+                    })
 
-            if (player.admin) { socket.emit('adminSettings', room) }
+                    room.refreshPlayersWordsList(sockets)
 
-            room.refreshPlayersList(sockets)
+                    if (player.admin) { socket.emit('adminSettings', room) }
 
-            room.notifyPlayers(sockets, player.pseudo, "JOIN")
+                    room.refreshPlayersList(sockets)
+
+                    room.notifyPlayers(sockets, player.pseudo, "JOIN")
+                    break;
+
+                case "game":
+                    recoverInGame(sockets, socket, room, player)
+                    break;
+
+                case "results":
+                    recoverResults(sockets, socket, room, player)
+                    break;
+
+                case "final":
+                    break;
+            }
 
         }, () => {
             socket.emit('error', 'serverError')
@@ -186,15 +190,11 @@ io.on("connect", (socket) => {
                     break;
 
                 case "game":
-                    socket.emit("savePlayerInformations", player, room.code)
-                    socket.emit("recoverInGame", room)
-                    room.notifyPlayers(sockets, player.pseudo, "RELOADED")
+                    recoverInGame(sockets, socket, room, player)
                     break;
 
                 case "results":
-                    socket.emit("savePlayerInformations", player, room.code)
-                    socket.emit("recoverResults", room)
-                    room.notifyPlayers(sockets, player.pseudo, "RELOADED")
+                    recoverResults(sockets, socket, room, player)
                     break;
 
                 case "final":
@@ -205,13 +205,25 @@ io.on("connect", (socket) => {
         })
     })
 
+    function recoverInGame(sockets, socket, room, player) {
+        socket.emit("savePlayerInformations", player, room.code)
+        socket.emit("recoverInGame", room)
+        room.notifyPlayers(sockets, player.pseudo, "RELOADED")
+    }
+
+    function recoverResults(sockets, socket, room, player) {
+        socket.emit("savePlayerInformations", player, room.code)
+        socket.emit("recoverResults", room)
+        player.ready = true
+        room.notifyPlayers(sockets, player.pseudo, "RELOADED")
+    }
+
     /**
      * Replay an other game
      */
     socket.on("replayRefresh", (data) => {
         RoomManager.roomExist(socket.code, (room) => {
             room.refreshPlayersList(sockets)
-                //room.refreshPlayersWordsList(sockets)
         }, () => {
             socket.emit('error', 'serverError')
         })
@@ -227,9 +239,7 @@ io.on("connect", (socket) => {
     })
 
     socket.on("getRounds", (cb) => {
-        console.log("getrounds")
         RoomManager.roomExist(socket.code, (room) => {
-            console.log("cb")
             cb(room.maxRound)
         })
     })

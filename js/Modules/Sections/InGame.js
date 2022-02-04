@@ -128,14 +128,13 @@ class SectionInGame {
                 let notes = []
                 for (let player of data.playersList) {
 
-                    if (player.disconnect) {
-                        break
-                    }
+                    if (!player.disconnect) {
 
-                    if (inputs[i].value == "") {
-                        notes.push(0)
-                    } else {
-                        notes.push(1)
+                        if (inputs[i].value == "") {
+                            notes.push(0)
+                        } else {
+                            notes.push(1)
+                        }
                     }
                 }
                 let current = {

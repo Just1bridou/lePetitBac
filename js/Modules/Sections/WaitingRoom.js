@@ -447,29 +447,30 @@ class SectionWR {
         countPlayer.elem.innerHTML = count + " JOUEUR(S)"
 
         for (let player of playersList) {
-            if (player.disconnect) { break }
+            if (!player.disconnect) {
 
-            console.log("create div for : " + player.pseudo)
+                console.log("create div for : " + player.pseudo)
 
-            let playerLi = this.createPlayerDiv(player)
-            waitingPlayerList.appendChild(playerLi)
+                let playerLi = this.createPlayerDiv(player)
+                waitingPlayerList.appendChild(playerLi)
 
-            if (this.game.isAdmin(localPlayer)) {
-                if (!this.game.isActualPlayer(player)) {
+                if (this.game.isAdmin(localPlayer)) {
+                    if (!this.game.isActualPlayer(player)) {
 
-                    let kickPlayer = new Container(new Span("KICK"), { "class": "kickPlayer" })
-                    playerLi.appendChild(kickPlayer)
+                        let kickPlayer = new Container(new Span("KICK"), { "class": "kickPlayer" })
+                        playerLi.appendChild(kickPlayer)
 
-                    kickPlayer.onClick(() => {
-                        this.game.emit('kickPlayer', player.uuid)
-                    })
+                        kickPlayer.onClick(() => {
+                            this.game.emit('kickPlayer', player.uuid)
+                        })
+                    }
                 }
-            }
 
-            if (!player.ready) {
-                playerLi.classAdd("unready")
-            } else {
-                playerLi.classRemove("unready")
+                if (!player.ready) {
+                    playerLi.classAdd("unready")
+                } else {
+                    playerLi.classRemove("unready")
+                }
             }
         }
     }

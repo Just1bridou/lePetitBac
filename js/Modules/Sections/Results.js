@@ -93,76 +93,79 @@ class SectionResults {
 
             for (let player of room.playersList) {
 
-                if (player.disconnect) {
-                    break
-                }
+                if (!player.disconnect && player.data.length > 0) {
 
-                console.log("create input for : " + player.pseudo)
+                    console.log("create input for : " + player.pseudo)
 
-                let input = player.data[i]
-                let inputNotes = input.notes
+                    let input = player.data[i]
+                    let inputNotes = input.notes
 
-                let tr = new Container(null, { "class": "lineContent" })
-                table.appendChild(tr)
+                    let tr = new Container(null, { "class": "lineContent" })
+                    table.appendChild(tr)
 
-                let playerPseudo = new Container(new Span(player.pseudo))
-                tr.appendChild(playerPseudo)
+                    let playerPseudo = new Container(new Span(player.pseudo))
+                    tr.appendChild(playerPseudo)
 
-                let value = new Container(new Span(input.value))
-                tr.appendChild(value)
+                    let value = new Container(new Span(input.value))
+                    tr.appendChild(value)
 
-                let userDivContent = new Container(null)
-                tr.appendChild(userDivContent)
+                    let userDivContent = new Container(null)
+                    tr.appendChild(userDivContent)
 
-                let userDiv = new Container(null, { "class": "userCase" })
-                userDivContent.appendChild(userDiv)
+                    let userDiv = new Container(null, { "class": "userCase" })
+                    userDivContent.appendChild(userDiv)
 
-                this.isCanceled(value, inputNotes)
+                    this.isCanceled(value, inputNotes)
 
-                userDiv.onClick(() => {
-                    this.game.emit('userIsReady', ready => {
-                        if (!ready) {
-                            userDiv.classToggle('falseCase')
-                            this.game.emit('editUserCase', {
-                                'uuid': player.uuid,
-                                'input': input
-                            })
-                        }
-                    });
-                })
+                    userDiv.onClick(() => {
+                        this.game.emit('userIsReady', ready => {
+                            if (!ready) {
+                                userDiv.classToggle('falseCase')
+                                this.game.emit('editUserCase', {
+                                    'uuid': player.uuid,
+                                    'input': input
+                                })
+                            }
+                        });
+                    })
 
-                if (!inputNotes[0]) {
-                    userDiv.classAdd('falseCase')
-                }
-
-                let resultContent = new Container(null, { "class": "resultsContent" })
-                tr.appendChild(resultContent)
-
-                for (let i = 0; i < inputNotes.length; i++) {
-
-                    let resCase = new Container(null, { "class": "resCase" })
-                    resultContent.appendChild(resCase)
-
-                    if (inputNotes[i]) {
-                        resCase.classRemove('falseCase')
-                    } else {
-                        resCase.classAdd('falseCase')
+                    if (!inputNotes[0]) {
+                        userDiv.classAdd('falseCase')
                     }
 
-                    this.game.on('refreshChoice', (playerReceive) => {
-                        if (player.uuid == playerReceive.uuid) {
-                            for (let np of playerReceive.data) {
-                                if (input.pos == np.pos && playerReceive.index == i) {
-                                    if (np.notes[playerReceive.index]) {
-                                        resCase.classRemove('falseCase')
-                                    } else {
-                                        resCase.classAdd('falseCase')
+                    let resultContent = new Container(null, { "class": "resultsContent" })
+                    tr.appendChild(resultContent)
+
+                    console.log(player.data)
+                    console.log(i)
+                    console.log(player.data[i])
+                    console.log(inputNotes)
+                    for (let i = 0; i < inputNotes.length; i++) {
+
+                        let resCase = new Container(null, { "class": "resCase" })
+                        resultContent.appendChild(resCase)
+
+                        if (inputNotes[i]) {
+                            resCase.classRemove('falseCase')
+                        } else {
+                            resCase.classAdd('falseCase')
+                        }
+
+                        this.game.on('refreshChoice', (playerReceive) => {
+                            if (player.uuid == playerReceive.uuid) {
+                                for (let np of playerReceive.data) {
+                                    if (input.pos == np.pos && playerReceive.index == i) {
+                                        if (np.notes[playerReceive.index]) {
+                                            resCase.classRemove('falseCase')
+                                        } else {
+                                            resCase.classAdd('falseCase')
+                                        }
+                                        this.isCanceled(value, np.notes)
                                     }
-                                    this.isCanceled(value, np.notes)
                                 }
                             }
-                        }
-                    })
+                        })
+                    }
                 }
             }
         }
@@ -237,38 +240,37 @@ class SectionResults {
 
         for (let player of playersList) {
 
-            if (player.disconnect) {
-                break
-            }
+            if (!player.disconnect) {
 
-            let infoContainer = new LayoutHorizontal([
-                new H3(player.pseudo, {
-                    "text": "center",
-                    "class": "flex_3"
-                }),
-                new H3(player.score + " PTS.", {
-                    "text": "left",
-                    "class": "flex_2"
-                }),
-                new Container(new Span('PAS PRÊT'), {
-                    "text": "right",
-                    "class": "stateNR flex_6 statusReady"
+                let infoContainer = new LayoutHorizontal([
+                    new H3(player.pseudo, {
+                        "text": "center",
+                        "class": "flex_3"
+                    }),
+                    new H3(player.score + " PTS.", {
+                        "text": "left",
+                        "class": "flex_2"
+                    }),
+                    new Container(new Span('PAS PRÊT'), {
+                        "text": "right",
+                        "class": "stateNR flex_6 statusReady"
+                    })
+                ], {
+                    "class": "recapPlayer p10 pl20 pr20 mt20",
+                    "justify": "between"
                 })
-            ], {
-                "class": "recapPlayer p10 pl20 pr20 mt20",
-                "justify": "between"
-            })
 
-            playerNextRound.appendChild(infoContainer)
+                playerNextRound.appendChild(infoContainer)
 
-            let status = infoContainer.select(".stateNR")
+                let status = infoContainer.select(".stateNR")
 
-            if (player.ready) {
-                infoContainer.classAdd('readyNR')
-                status.elem.innerHTML = "PRÊT"
-            } else {
-                infoContainer.classRemove('readyNR')
-                status.elem.innerHTML = "PAS PRÊT"
+                if (player.ready) {
+                    infoContainer.classAdd('readyNR')
+                    status.elem.innerHTML = "PRÊT"
+                } else {
+                    infoContainer.classRemove('readyNR')
+                    status.elem.innerHTML = "PAS PRÊT"
+                }
             }
         }
     }
