@@ -1,42 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="height=device-height, 
+                      width=device-width, initial-scale=1.0, 
+                      minimum-scale=1.0, maximum-scale=1.0, 
+                      user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Le petit bac version numérique ! Jouer avec vos amis ou avec des personnes tout autour du globe, affrontez vous pour gagner un maximum de point et être le meilleur joueur !"
+    />
+    <meta
+      name="keywords"
+      content="petit bac, petit, bac, jeu en ligne, le petit bac, multijoueur"
+    />
+    <meta name="author" content="Justin A-M" />
 
-<head>
-
-    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"
+    ></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
+      window.dataLayer = window.dataLayer || [];
 
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-        gtag('config', 'G-18NWYNB436');
+      gtag("config", "G-18NWYNB436");
     </script>
 
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link href="/css/elements.css" rel="stylesheet">
-    <link href="/css/login.css" rel="stylesheet">
-    <link href="/css/results.css" rel="stylesheet">
-    <link href="/css/style.css" rel="stylesheet">
-    <link href="/css/stylePhone.css" rel="stylesheet">
+    <link href="/css/elements.css" rel="stylesheet" />
+    <link href="/css/login.css" rel="stylesheet" />
+    <link href="/css/results.css" rel="stylesheet" />
+    <link href="/css/style.css" rel="stylesheet" />
+    <link href="/css/stylePhone.css" rel="stylesheet" />
 
     <link rel="shortcut icon" href="/images/favicon-32x32.png" />
     <title>Petit bac</title>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <section id="error" class="none">
-        <h1></h1>
+      <h1></h1>
     </section>
 
-    <section id="notifications">
-    </section>
+    <section id="notifications"></section>
 
     <!-- Include Modules -->
     <script src="/js/Modules/Utils.js"></script>
@@ -61,6 +75,5 @@
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/socket.io.min.js"></script>
-</body>
-
+  </body>
 </html>
